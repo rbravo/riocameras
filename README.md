@@ -8,15 +8,13 @@ Visualizador interativo das câmeras de monitoramento do Rio de Janeiro em mapa.
 
 ## 🌟 Demo
 
-🔗 **[Ver Demo Online](https://seu-usuario.github.io/seu-repositorio/)**
+🔗 **[Ver Demo Online](https://rbravo.github.io/riocameras/)**
 
 ## ✨ Funcionalidades
 
 - 🗺️ Mapa interativo com todas as câmeras do Rio de Janeiro
 - 📍 Marcadores customizados para cada câmera
 - 🎥 Visualização da câmera em popup ao clicar
-- 📱 Interface responsiva
-- ⚡ Carregamento rápido
 - 🆓 100% gratuito e open source
 
 ## 🚀 Como usar
@@ -52,12 +50,6 @@ npm run deploy
 ```
 
 Ou configure GitHub Actions (arquivo já incluído em `.github/workflows/deploy.yml`)
-
-### Outros serviços
-
-- **Netlify**: Arraste a pasta `build` no site
-- **Vercel**: `vercel build/ --prod`
-- **Amazon S3**: `aws s3 sync build/ s3://seu-bucket`
 
 ## 🛠️ Tecnologias
 
