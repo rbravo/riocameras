@@ -64,6 +64,60 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         }
 
+        /* Media Queries para Mobile */
+        @media (max-width: 768px) {
+            .camera-popup {
+                min-width: 280px;
+                max-width: 100%;
+            }
+
+            .camera-popup h3 {
+                font-size: 14px;
+            }
+
+            .camera-popup iframe {
+                width: 100%;
+                max-width: 860px;
+                height: 520px;
+                min-height: 420px;
+                zoom: 0.4;
+            }
+
+            .leaflet-popup-content {
+                margin: 8px;
+                min-width: 260px;
+                max-width: 90vw;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .camera-popup {
+                min-width: 360px;
+            }
+
+            .camera-popup h3 {
+                font-size: 12px;
+                margin-bottom: 8px;
+            }
+
+            .camera-popup iframe {
+                max-width: 860px;
+                height: 520px;
+                min-height: 420px;
+                zoom: 0.4;
+            }
+
+            .leaflet-popup-content {
+                margin: 8px;
+                min-width: 260px;
+                max-width: 90vw;
+            }
+
+            .camera-icon {
+                transform: scale(0.8);
+            }
+        }
+
         .loading {
             position: absolute;
             top: 50%;
@@ -133,7 +187,7 @@
 
                         marker.bindPopup(popupContent, {
                             maxWidth: 650,
-                            minWidth: 620
+                            minWidth: 320
                         });
                     }
                 });
