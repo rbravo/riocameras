@@ -1,5 +1,6 @@
 {
-  "name": "rio-cameras-map",
+  "name": "riocameras",
+  "author": "Rafael Bravo",
   "version": "1.0.0",
   "description": "Visualizador de câmeras do Rio de Janeiro em mapa",
   "main": "server.js",
