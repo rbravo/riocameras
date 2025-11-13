@@ -289,7 +289,7 @@
 
     <script>
         // Inicializar o mapa centrado no Rio de Janeiro
-        const map = L.map('map').setView([-22.9068, -43.1729], 12);
+        const map = L.map('map').setView([-22.9068, -43.1729], 14);
 
         // Adicionar camada de tiles do OpenStreetMap
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -321,24 +321,135 @@
                     if (!isNaN(lat) && !isNaN(lon)) {
                         const marker = L.marker([lat, lon], { icon: cameraIcon }).addTo(map);
 
-                        // Criar conteúdo do popup com iframe
-                        const popupContent = `
+                        // Criar popup com placeholder inicial
+                        const popupPlaceholder = `
                             <div class="camera-popup">
                                 <h3>#${camera.id} - ${camera.nome}</h3>
-                                <a href="https://aplicativo.cocr.com.br/camera/${camera.id}" 
-                                    style="padding-bottom: 8px;" target="_blank">Abrir em uma nova aba</a>
-                                <iframe 
-                                src="https://aplicativo.cocr.com.br/camera/${camera.id}" 
-                                frameborder="0"
-                                allowfullscreen>
-                                </iframe>
-                                <br/>
+                                <div id="camera-content-${camera.id}" style="padding: 20px;">
+                                    <p>Carregando câmera...</p>
+                                </div>
                             </div>
                         `;
 
-                        marker.bindPopup(popupContent, {
+                        const popup = L.popup({
                             maxWidth: 650,
                             minWidth: 320
+                        }).setContent(popupPlaceholder);
+
+                        marker.bindPopup(popup);
+
+                        // Função para carregar o conteúdo da câmera
+                        const loadCameraContent = async (cameraId, cameraUrl) => {
+                            // Buscar o contentDiv toda vez que a função é chamada
+                            const contentDiv = document.getElementById(`camera-content-${cameraId}`);
+                            if (!contentDiv) {
+                                console.error(`ContentDiv não encontrado para câmera ${cameraId}`);
+                                return;
+                            }
+                            
+                            // Função para mostrar erro
+                            const showError = (statusCode, statusText = '') => {
+                                const errorMessages = {
+                                    '400': 'Requisição inválida (400 Bad Request)',
+                                    '404': 'Câmera não encontrada (404)',
+                                    '500': 'Erro no servidor (500)',
+                                    '502': 'Servidor indisponível (502)',
+                                    '503': 'Serviço indisponível (503)',
+                                    'timeout': 'Tempo limite excedido',
+                                    'network': 'Erro de conexão'
+                                };
+                                
+                                const message = errorMessages[statusCode] || `Câmera indisponível (${statusCode || 'erro'})`;
+                                
+                                contentDiv.innerHTML = `
+                                    <div style="text-align: center; padding: 30px 20px;">
+                                        <p style="color: #d32f2f; margin-bottom: 10px; font-weight: bold;">⚠️ ${message}</p>
+                                        <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
+                                            Esta câmera pode estar temporariamente fora do ar.
+                                        </p>
+                                        <button id="retry-btn-${cameraId}" 
+                                            style="background: #1f54b8; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; margin-right: 10px;">
+                                            Tentar novamente
+                                        </button>
+                                        <a href="${cameraUrl}" target="_blank"
+                                            style="display: inline-block; background: #666; color: white; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 14px;">
+                                            Abrir em nova aba
+                                        </a>
+                                    </div>
+                                `;
+                                
+                                // Adicionar event listener ao botão de retry
+                                setTimeout(() => {
+                                    const retryBtn = document.getElementById(`retry-btn-${cameraId}`);
+                                    if (retryBtn) {
+                                        retryBtn.addEventListener('click', (e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            loadCameraContent(cameraId, cameraUrl);
+                                        });
+                                    }
+                                }, 100);
+                            };
+                            
+                            try {
+                                // Mostrar loading
+                                contentDiv.innerHTML = `
+                                    <div style="padding: 40px 20px; color: #666; text-align: center;">
+                                        <p>Verificando disponibilidade da câmera...</p>
+                                    </div>
+                                `;
+
+                                // Fazer fetch para verificar o status da URL
+                                const controller = new AbortController();
+                                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
+                                
+                                try {
+                                    const response = await fetch(cameraUrl, {
+                                        method: 'GET',
+                                        signal: controller.signal
+                                    });
+                                    
+                                    clearTimeout(timeoutId);
+                                    
+                                    // Verificar o status code
+                                    if (!response.ok) {
+                                        console.log(`Câmera ${cameraId}: Status ${response.status}`);
+                                        showError(response.status.toString(), response.statusText);
+                                        return;
+                                    }
+                                    
+                                    // Se chegou aqui, a câmera está disponível, carregar o iframe
+                                    contentDiv.innerHTML = `
+                                        <a href="${cameraUrl}" 
+                                            style="padding-bottom: 8px; display: block;" target="_blank">Abrir em uma nova aba</a>
+                                        <iframe 
+                                            src="${cameraUrl}" 
+                                            frameborder="0"
+                                            allowfullscreen>
+                                        </iframe>
+                                    `;
+                                    
+                                } catch (fetchError) {
+                                    clearTimeout(timeoutId);
+                                    
+                                    if (fetchError.name === 'AbortError') {
+                                        console.log(`Câmera ${cameraId}: Timeout`);
+                                        showError('timeout');
+                                    } else {
+                                        console.log(`Câmera ${cameraId}: Erro de rede`, fetchError);
+                                        showError('network');
+                                    }
+                                }
+                                
+                            } catch (error) {
+                                console.error('Erro ao verificar câmera:', error);
+                                showError('network');
+                            }
+                        };
+
+                        // Quando o popup abrir, verificar se a câmera está disponível
+                        marker.on('popupopen', async () => {
+                            loadCameraContent(camera.id, `https://aplicativo.cocr.com.br/camera/${camera.id}`);
                         });
                     }
                 });
