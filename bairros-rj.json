@@ -1,0 +1,1022 @@
+[
+  {
+    "id": 12144,
+    "nome": "Abolição",
+    "latitude": -22.8861614,
+    "longitude": -43.2998457
+  },
+  {
+    "id": 12145,
+    "nome": "Acari",
+    "latitude": -22.8221528,
+    "longitude": -43.3406743
+  },
+  {
+    "id": 12146,
+    "nome": "Água Santa",
+    "latitude": -22.9111428,
+    "longitude": -43.3121258
+  },
+  {
+    "id": 12147,
+    "nome": "Alto da Boa Vista",
+    "latitude": -22.9621126,
+    "longitude": -43.2535816
+  },
+  {
+    "id": 12148,
+    "nome": "Anchieta",
+    "latitude": -22.9133954,
+    "longitude": -43.2007101
+  },
+  {
+    "id": 12149,
+    "nome": "Andaraí",
+    "latitude": -22.9290845,
+    "longitude": -43.2534858
+  },
+  {
+    "id": 12150,
+    "nome": "Anil",
+    "latitude": -22.9558133,
+    "longitude": -43.3384123
+  },
+  {
+    "id": 12151,
+    "nome": "Araújo de Cosmos",
+    "latitude": -22.9133954,
+    "longitude": -43.2007101
+  },
+  {
+    "id": 59881,
+    "nome": "Área Rural de Rio de Janeiro",
+    "latitude": -22.9133954,
+    "longitude": -43.2007101
+  },
+  {
+    "id": 12152,
+    "nome": "Baia de Guanabara",
+    "latitude": -22.8169023,
+    "longitude": -43.1272201
+  },
+  {
+    "id": 12153,
+    "nome": "Bancários",
+    "latitude": -22.7917588,
+    "longitude": -43.180966
+  },
+  {
+    "id": 12154,
+    "nome": "Bangu",
+    "latitude": -22.8753053,
+    "longitude": -43.4648805
+  },
+  {
+    "id": 12155,
+    "nome": "Barra da Tijuca",
+    "latitude": -22.9997404,
+    "longitude": -43.3659929
+  },
+  {
+    "id": 12156,
+    "nome": "Barra de Guaratiba",
+    "latitude": -23.0360036,
+    "longitude": -43.5521395
+  },
+  {
+    "id": 97339,
+    "nome": "Barra Olímpica",
+    "latitude": -22.9703273,
+    "longitude": -43.3894229
+  },
+  {
+    "id": 12157,
+    "nome": "Barros Filho",
+    "latitude": -22.8348857,
+    "longitude": -43.3631878
+  },
+  {
+    "id": 12158,
+    "nome": "Benfica",
+    "latitude": -22.8922965,
+    "longitude": -43.240341
+  },
+  {
+    "id": 12159,
+    "nome": "Bento Ribeiro",
+    "latitude": -22.8666607,
+    "longitude": -43.3608367
+  },
+  {
+    "id": 12160,
+    "nome": "Bonsucesso",
+    "latitude": -22.8659317,
+    "longitude": -43.253318
+  },
+  {
+    "id": 12161,
+    "nome": "Botafogo",
+    "latitude": -22.9515096,
+    "longitude": -43.1862969
+  },
+  {
+    "id": 12162,
+    "nome": "Brás de Pina",
+    "latitude": -22.831888,
+    "longitude": -43.2977309
+  },
+  {
+    "id": 12163,
+    "nome": "Cachambi",
+    "latitude": -22.8897728,
+    "longitude": -43.2743347
+  },
+  {
+    "id": 12165,
+    "nome": "Cacuia",
+    "latitude": -22.8217028,
+    "longitude": -43.1837917
+  },
+  {
+    "id": 12166,
+    "nome": "Caju",
+    "latitude": -22.8803063,
+    "longitude": -43.2214936
+  },
+  {
+    "id": 12167,
+    "nome": "Camorim",
+    "latitude": -22.9711394,
+    "longitude": -43.4311836
+  },
+  {
+    "id": 12168,
+    "nome": "Campinho",
+    "latitude": -22.8852187,
+    "longitude": -43.347738
+  },
+  {
+    "id": 12169,
+    "nome": "Campo dos Afonsos",
+    "latitude": -22.8795186,
+    "longitude": -43.3803636
+  },
+  {
+    "id": 12170,
+    "nome": "Campo Grande",
+    "latitude": -22.902953,
+    "longitude": -43.5591295
+  },
+  {
+    "id": 12171,
+    "nome": "Cascadura",
+    "latitude": -22.8841816,
+    "longitude": -43.3283969
+  },
+  {
+    "id": 12172,
+    "nome": "Catete",
+    "latitude": -22.9269199,
+    "longitude": -43.1802186
+  },
+  {
+    "id": 12173,
+    "nome": "Catumbi",
+    "latitude": -22.9194542,
+    "longitude": -43.1970806
+  },
+  {
+    "id": 12174,
+    "nome": "Cavalcanti",
+    "latitude": -22.8705266,
+    "longitude": -43.3165261
+  },
+  {
+    "id": 12175,
+    "nome": "Centro",
+    "latitude": -22.2800004,
+    "longitude": -42.5325303
+  },
+  {
+    "id": 12176,
+    "nome": "Cidade de Deus",
+    "latitude": -22.94803,
+    "longitude": -43.362903
+  },
+  {
+    "id": 12177,
+    "nome": "Cidade Nova",
+    "latitude": -22.9100508,
+    "longitude": -43.201756
+  },
+  {
+    "id": 12178,
+    "nome": "Cidade Universitária",
+    "latitude": -22.8558233,
+    "longitude": -43.2309583
+  },
+  {
+    "id": 12179,
+    "nome": "Cocotá",
+    "latitude": -22.8050047,
+    "longitude": -43.1805463
+  },
+  {
+    "id": 12180,
+    "nome": "Coelho Neto",
+    "latitude": -22.8322449,
+    "longitude": -43.3501913
+  },
+  {
+    "id": 12181,
+    "nome": "Colégio",
+    "latitude": -22.83979,
+    "longitude": -43.3357623
+  },
+  {
+    "id": 12182,
+    "nome": "Copacabana",
+    "latitude": -22.971974,
+    "longitude": -43.1842997
+  },
+  {
+    "id": 12183,
+    "nome": "Cordovil",
+    "latitude": -22.8194378,
+    "longitude": -43.2915908
+  },
+  {
+    "id": 12184,
+    "nome": "Cosme Velho",
+    "latitude": -22.9415143,
+    "longitude": -43.2006244
+  },
+  {
+    "id": 12185,
+    "nome": "Cosmos",
+    "latitude": -22.9078051,
+    "longitude": -43.6144915
+  },
+  {
+    "id": 12186,
+    "nome": "Costa Barros",
+    "latitude": -22.8246995,
+    "longitude": -43.3698395
+  },
+  {
+    "id": 12187,
+    "nome": "Curicica",
+    "latitude": -22.9519909,
+    "longitude": -43.3872901
+  },
+  {
+    "id": 12188,
+    "nome": "Curral Falso",
+    "latitude": -22.9357427,
+    "longitude": -43.6667429
+  },
+  {
+    "id": 12189,
+    "nome": "Del Castilho",
+    "latitude": -22.8795618,
+    "longitude": -43.2724202
+  },
+  {
+    "id": 12190,
+    "nome": "Dendê",
+    "latitude": -22.8016721,
+    "longitude": -43.1902905
+  },
+  {
+    "id": 12191,
+    "nome": "Deodoro",
+    "latitude": -22.851201,
+    "longitude": -43.3870315
+  },
+  {
+    "id": 12192,
+    "nome": "Dumas",
+    "latitude": -22.9348521,
+    "longitude": -43.6997751
+  },
+  {
+    "id": 12193,
+    "nome": "Encantado",
+    "latitude": -22.8974743,
+    "longitude": -43.3042461
+  },
+  {
+    "id": 12194,
+    "nome": "Engenheiro Leal",
+    "latitude": -22.8743923,
+    "longitude": -43.3255315
+  },
+  {
+    "id": 12195,
+    "nome": "Engenho da Rainha",
+    "latitude": -22.8626496,
+    "longitude": -43.2937874
+  },
+  {
+    "id": 12196,
+    "nome": "Engenho de Dentro",
+    "latitude": -22.9026591,
+    "longitude": -43.2967757
+  },
+  {
+    "id": 12197,
+    "nome": "Engenho Novo",
+    "latitude": -22.9090942,
+    "longitude": -43.2678381
+  },
+  {
+    "id": 12198,
+    "nome": "Estácio",
+    "latitude": -22.9166265,
+    "longitude": -43.20363
+  },
+  {
+    "id": 12199,
+    "nome": "Flamengo",
+    "latitude": -22.9339841,
+    "longitude": -43.1745744
+  },
+  {
+    "id": 12200,
+    "nome": "Freguesia (Ilha do Governador)",
+    "latitude": -22.9133954,
+    "longitude": -43.2007101
+  },
+  {
+    "id": 33624,
+    "nome": "Freguesia (Jacarepaguá)",
+    "latitude": -22.9408899,
+    "longitude": -43.3422564
+  },
+  {
+    "id": 12201,
+    "nome": "Galeão",
+    "latitude": -22.8075065,
+    "longitude": -43.2355215
+  },
+  {
+    "id": 12202,
+    "nome": "Gamboa",
+    "latitude": -22.8977491,
+    "longitude": -43.1929041
+  },
+  {
+    "id": 12203,
+    "nome": "Gardênia Azul",
+    "latitude": -22.9582866,
+    "longitude": -43.3512241
+  },
+  {
+    "id": 12204,
+    "nome": "Gávea",
+    "latitude": -22.9814243,
+    "longitude": -43.2383245
+  },
+  {
+    "id": 12205,
+    "nome": "Glória",
+    "latitude": -22.9183225,
+    "longitude": -43.1739232
+  },
+  {
+    "id": 12206,
+    "nome": "Grajaú",
+    "latitude": -22.9225217,
+    "longitude": -43.2645145
+  },
+  {
+    "id": 12207,
+    "nome": "Grumari",
+    "latitude": -23.0470388,
+    "longitude": -43.5334787
+  },
+  {
+    "id": 12208,
+    "nome": "Guadalupe",
+    "latitude": -22.8376208,
+    "longitude": -43.3751608
+  },
+  {
+    "id": 12209,
+    "nome": "Guarabu",
+    "latitude": -22.8088833,
+    "longitude": -43.1941802
+  },
+  {
+    "id": 12210,
+    "nome": "Guaratiba",
+    "latitude": -22.9905839,
+    "longitude": -43.584923
+  },
+  {
+    "id": 12211,
+    "nome": "Higienópolis",
+    "latitude": -22.873999,
+    "longitude": -43.2613682
+  },
+  {
+    "id": 12212,
+    "nome": "Honório Gurgel",
+    "latitude": -22.8465751,
+    "longitude": -43.3561294
+  },
+  {
+    "id": 12213,
+    "nome": "Humaitá",
+    "latitude": -22.9546413,
+    "longitude": -43.2004797
+  },
+  {
+    "id": 12214,
+    "nome": "Inhaúma",
+    "latitude": -22.8715476,
+    "longitude": -43.2823466
+  },
+  {
+    "id": 12215,
+    "nome": "Inhoaíba",
+    "latitude": -22.9131775,
+    "longitude": -43.5932975
+  },
+  {
+    "id": 12216,
+    "nome": "Ipanema",
+    "latitude": -22.9839557,
+    "longitude": -43.2022163
+  },
+  {
+    "id": 12217,
+    "nome": "Irajá",
+    "latitude": -22.8351129,
+    "longitude": -43.3233619
+  },
+  {
+    "id": 12218,
+    "nome": "Itacolomi",
+    "latitude": -21.844635,
+    "longitude": -41.8850166
+  },
+  {
+    "id": 12219,
+    "nome": "Itanhangá",
+    "latitude": -22.9870911,
+    "longitude": -43.3049379
+  },
+  {
+    "id": 12221,
+    "nome": "Jacaré",
+    "latitude": -22.8931174,
+    "longitude": -43.2571998
+  },
+  {
+    "id": 12222,
+    "nome": "Jacarepaguá",
+    "latitude": -22.9531726,
+    "longitude": -43.3715825
+  },
+  {
+    "id": 60086,
+    "nome": "Jacarezinho",
+    "latitude": -22.8875068,
+    "longitude": -43.2578789
+  },
+  {
+    "id": 12223,
+    "nome": "Jardim América",
+    "latitude": -22.810005,
+    "longitude": -43.323212
+  },
+  {
+    "id": 12224,
+    "nome": "Jardim Botânico",
+    "latitude": -22.9636362,
+    "longitude": -43.2233457
+  },
+  {
+    "id": 12225,
+    "nome": "Jardim Carioca",
+    "latitude": -22.8052493,
+    "longitude": -43.1931949
+  },
+  {
+    "id": 12226,
+    "nome": "Jardim Guanabara",
+    "latitude": -22.8128362,
+    "longitude": -43.2007792
+  },
+  {
+    "id": 12230,
+    "nome": "Jardim Sulacap",
+    "latitude": -22.8956799,
+    "longitude": -43.3929967
+  },
+  {
+    "id": 12231,
+    "nome": "Joá",
+    "latitude": -23.0077797,
+    "longitude": -43.2872344
+  },
+  {
+    "id": 12232,
+    "nome": "Lagoa",
+    "latitude": -22.9624658,
+    "longitude": -43.2024884
+  },
+  {
+    "id": 12233,
+    "nome": "Laranjeiras",
+    "latitude": -22.9343173,
+    "longitude": -43.1878165
+  },
+  {
+    "id": 12234,
+    "nome": "Leblon",
+    "latitude": -22.9834608,
+    "longitude": -43.2249656
+  },
+  {
+    "id": 12235,
+    "nome": "Leme",
+    "latitude": -22.961704,
+    "longitude": -43.1669042
+  },
+  {
+    "id": 12236,
+    "nome": "Lins de Vasconcelos",
+    "latitude": -22.9140512,
+    "longitude": -43.2843528
+  },
+  {
+    "id": 12237,
+    "nome": "Loteamento Madean",
+    "latitude": -22.9133954,
+    "longitude": -43.2007101
+  },
+  {
+    "id": 12239,
+    "nome": "Madureira",
+    "latitude": -22.871658,
+    "longitude": -43.3371976
+  },
+  {
+    "id": 12240,
+    "nome": "Magalhães Bastos",
+    "latitude": -22.8725117,
+    "longitude": -43.4136384
+  },
+  {
+    "id": 12241,
+    "nome": "Mangueira",
+    "latitude": -22.9031898,
+    "longitude": -43.2357105
+  },
+  {
+    "id": 12242,
+    "nome": "Manguinhos",
+    "latitude": -22.8799736,
+    "longitude": -43.2457223
+  },
+  {
+    "id": 12243,
+    "nome": "Maracanã",
+    "latitude": -22.9121619,
+    "longitude": -43.2311861
+  },
+  {
+    "id": 43689,
+    "nome": "Maré",
+    "latitude": -22.8592368,
+    "longitude": -43.2425729
+  },
+  {
+    "id": 12244,
+    "nome": "Marechal Hermes",
+    "latitude": -22.8599658,
+    "longitude": -43.3704561
+  },
+  {
+    "id": 12245,
+    "nome": "Maria da Graça",
+    "latitude": -22.8830403,
+    "longitude": -43.2638849
+  },
+  {
+    "id": 12246,
+    "nome": "Méier",
+    "latitude": -22.90173,
+    "longitude": -43.2797093
+  },
+  {
+    "id": 12247,
+    "nome": "Moneró",
+    "latitude": -22.7964947,
+    "longitude": -43.197406
+  },
+  {
+    "id": 12248,
+    "nome": "Nossa Senhora das Graças",
+    "latitude": -22.504087,
+    "longitude": -44.0940163
+  },
+  {
+    "id": 12250,
+    "nome": "Olaria",
+    "latitude": -22.8484866,
+    "longitude": -43.2706124
+  },
+  {
+    "id": 12251,
+    "nome": "Oswaldo Cruz",
+    "latitude": -22.8705266,
+    "longitude": -43.350194
+  },
+  {
+    "id": 12252,
+    "nome": "Paciência",
+    "latitude": -22.8987,
+    "longitude": -43.6369556
+  },
+  {
+    "id": 12253,
+    "nome": "Padre Miguel",
+    "latitude": -22.8788135,
+    "longitude": -43.4485569
+  },
+  {
+    "id": 12254,
+    "nome": "Paquetá",
+    "latitude": -22.7589261,
+    "longitude": -43.1091992
+  },
+  {
+    "id": 12255,
+    "nome": "Parada de Lucas",
+    "latitude": -22.8167023,
+    "longitude": -43.3012102
+  },
+  {
+    "id": 12256,
+    "nome": "Parque Anchieta",
+    "latitude": -22.8351687,
+    "longitude": -43.4155827
+  },
+  {
+    "id": 58761,
+    "nome": "Parque Colúmbia",
+    "latitude": -22.8138907,
+    "longitude": -43.3424983
+  },
+  {
+    "id": 12257,
+    "nome": "Pavuna",
+    "latitude": -22.8121927,
+    "longitude": -43.3592811
+  },
+  {
+    "id": 12258,
+    "nome": "Pechincha",
+    "latitude": -22.9133954,
+    "longitude": -43.2007101
+  },
+  {
+    "id": 12259,
+    "nome": "Pedra de Guaratiba",
+    "latitude": -22.9983546,
+    "longitude": -43.6388666
+  },
+  {
+    "id": 12260,
+    "nome": "Penha",
+    "latitude": -22.8381127,
+    "longitude": -43.2764454
+  },
+  {
+    "id": 12261,
+    "nome": "Penha Circular",
+    "latitude": -22.8326425,
+    "longitude": -43.2842228
+  },
+  {
+    "id": 12262,
+    "nome": "Piedade",
+    "latitude": -22.8926665,
+    "longitude": -43.3110001
+  },
+  {
+    "id": 12263,
+    "nome": "Pilares",
+    "latitude": -22.8790904,
+    "longitude": -43.2955477
+  },
+  {
+    "id": 12264,
+    "nome": "Pitangueiras",
+    "latitude": -22.8171281,
+    "longitude": -43.1799542
+  },
+  {
+    "id": 12265,
+    "nome": "Portuguesa",
+    "latitude": -22.7999597,
+    "longitude": -43.2068169
+  },
+  {
+    "id": 12266,
+    "nome": "Praça da Bandeira",
+    "latitude": -22.9112162,
+    "longitude": -43.2131983
+  },
+  {
+    "id": 12267,
+    "nome": "Praça Seca",
+    "latitude": -22.8992621,
+    "longitude": -43.3527794
+  },
+  {
+    "id": 12268,
+    "nome": "Praia da Bandeira",
+    "latitude": -22.8104077,
+    "longitude": -43.179895
+  },
+  {
+    "id": 12270,
+    "nome": "Quintino Bocaiúva",
+    "latitude": -22.8955889,
+    "longitude": -43.3253269
+  },
+  {
+    "id": 12271,
+    "nome": "Ramos",
+    "latitude": -22.8519758,
+    "longitude": -43.2555693
+  },
+  {
+    "id": 12272,
+    "nome": "Realengo",
+    "latitude": -22.8772743,
+    "longitude": -43.4301032
+  },
+  {
+    "id": 12273,
+    "nome": "Recreio dos Bandeirantes",
+    "latitude": -23.0185151,
+    "longitude": -43.4634021
+  },
+  {
+    "id": 12274,
+    "nome": "Riachuelo",
+    "latitude": -22.9026953,
+    "longitude": -43.255175
+  },
+  {
+    "id": 12275,
+    "nome": "Ribeira",
+    "latitude": -22.8252399,
+    "longitude": -43.1705907
+  },
+  {
+    "id": 12276,
+    "nome": "Ricardo de Albuquerque",
+    "latitude": -22.8366987,
+    "longitude": -43.3916757
+  },
+  {
+    "id": 12277,
+    "nome": "Rio Comprido",
+    "latitude": -22.9279449,
+    "longitude": -43.2088566
+  },
+  {
+    "id": 12279,
+    "nome": "Rocha",
+    "latitude": -22.8995624,
+    "longitude": -43.2488072
+  },
+  {
+    "id": 12280,
+    "nome": "Rocha Miranda",
+    "latitude": -22.8503472,
+    "longitude": -43.3463053
+  },
+  {
+    "id": 12281,
+    "nome": "Rocinha",
+    "latitude": -22.9885204,
+    "longitude": -43.2482058
+  },
+  {
+    "id": 12282,
+    "nome": "Sampaio",
+    "latitude": -22.9022287,
+    "longitude": -43.2602402
+  },
+  {
+    "id": 12283,
+    "nome": "Santa Cruz",
+    "latitude": -22.9176248,
+    "longitude": -43.6834907
+  },
+  {
+    "id": 12284,
+    "nome": "Santa Teresa",
+    "latitude": -22.9215542,
+    "longitude": -43.1860269
+  },
+  {
+    "id": 12285,
+    "nome": "Santíssimo",
+    "latitude": -22.8751928,
+    "longitude": -43.5198512
+  },
+  {
+    "id": 12286,
+    "nome": "Santo Cristo",
+    "latitude": -22.9007657,
+    "longitude": -43.2033933
+  },
+  {
+    "id": 12287,
+    "nome": "São Conrado",
+    "latitude": -22.9913592,
+    "longitude": -43.2675329
+  },
+  {
+    "id": 12288,
+    "nome": "São Cristóvão",
+    "latitude": -22.899318,
+    "longitude": -43.2219346
+  },
+  {
+    "id": 12289,
+    "nome": "São Francisco Xavier",
+    "latitude": -22.9047617,
+    "longitude": -43.2440314
+  },
+  {
+    "id": 12291,
+    "nome": "Saúde",
+    "latitude": -22.8971835,
+    "longitude": -43.1841545
+  },
+  {
+    "id": 12292,
+    "nome": "Senador Camará",
+    "latitude": -22.888752,
+    "longitude": -43.4913887
+  },
+  {
+    "id": 12293,
+    "nome": "Senador Vasconcelos",
+    "latitude": -22.8953684,
+    "longitude": -43.5288566
+  },
+  {
+    "id": 12294,
+    "nome": "Sepetiba",
+    "latitude": -22.9679803,
+    "longitude": -43.6940872
+  },
+  {
+    "id": 12295,
+    "nome": "Tanque",
+    "latitude": -22.9151927,
+    "longitude": -43.3557471
+  },
+  {
+    "id": 12296,
+    "nome": "Taquara",
+    "latitude": -22.9218864,
+    "longitude": -43.384646
+  },
+  {
+    "id": 12297,
+    "nome": "Tauá",
+    "latitude": -22.7977495,
+    "longitude": -43.1867478
+  },
+  {
+    "id": 12298,
+    "nome": "Tijuca",
+    "latitude": -22.9247351,
+    "longitude": -43.2327165
+  },
+  {
+    "id": 12301,
+    "nome": "Todos os Santos",
+    "latitude": -22.894563,
+    "longitude": -43.28506
+  },
+  {
+    "id": 12302,
+    "nome": "Tomás Coelho",
+    "latitude": -22.8676979,
+    "longitude": -43.3060881
+  },
+  {
+    "id": 12303,
+    "nome": "Tubiacanga",
+    "latitude": -22.7855214,
+    "longitude": -43.2265169
+  },
+  {
+    "id": 12304,
+    "nome": "Turiaçu",
+    "latitude": -22.8616631,
+    "longitude": -43.3418026
+  },
+  {
+    "id": 12305,
+    "nome": "Urca",
+    "latitude": -22.954074,
+    "longitude": -43.1679727
+  },
+  {
+    "id": 12306,
+    "nome": "Vargem Grande",
+    "latitude": -22.9707911,
+    "longitude": -43.4968914
+  },
+  {
+    "id": 12307,
+    "nome": "Vargem Pequena",
+    "latitude": -22.9818187,
+    "longitude": -43.4578117
+  },
+  {
+    "id": 55524,
+    "nome": "Vasco da Gama",
+    "latitude": -22.8915219,
+    "longitude": -43.2267195
+  },
+  {
+    "id": 12308,
+    "nome": "Vaz Lobo",
+    "latitude": -22.8589721,
+    "longitude": -43.3278646
+  },
+  {
+    "id": 12309,
+    "nome": "Vicente de Carvalho",
+    "latitude": -22.8571804,
+    "longitude": -43.3157892
+  },
+  {
+    "id": 12310,
+    "nome": "Vidigal",
+    "latitude": -22.9952094,
+    "longitude": -43.2408556
+  },
+  {
+    "id": 12311,
+    "nome": "Vigário Geral",
+    "latitude": -22.8095333,
+    "longitude": -43.3097039
+  },
+  {
+    "id": 12312,
+    "nome": "Vila da Penha",
+    "latitude": -22.8435065,
+    "longitude": -43.3100585
+  },
+  {
+    "id": 12314,
+    "nome": "Vila Isabel",
+    "latitude": -22.9166993,
+    "longitude": -43.2508354
+  },
+  {
+    "id": 12316,
+    "nome": "Vila Kosmos",
+    "latitude": -22.853597,
+    "longitude": -43.3032021
+  },
+  {
+    "id": 12317,
+    "nome": "Vila Militar",
+    "latitude": -22.860348,
+    "longitude": -43.4028933
+  },
+  {
+    "id": 12318,
+    "nome": "Vila Valqueire",
+    "latitude": -22.8886093,
+    "longitude": -43.3657758
+  },
+  {
+    "id": 12320,
+    "nome": "Vista Alegre",
+    "latitude": -22.8296244,
+    "longitude": -43.3151276
+  },
+  {
+    "id": 12321,
+    "nome": "Zumbi",
+    "latitude": -22.8212784,
+    "longitude": -43.1758609
+  }
+]

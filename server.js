@@ -19,6 +19,17 @@ app.get('/api/cameras', (req, res) => {
     }
 });
 
+// Rota para obter os dados dos bairros
+app.get('/api/bairros', (req, res) => {
+    try {
+        const data = fs.readFileSync('bairros-rj.json', 'utf8');
+        const bairros = JSON.parse(data);
+        res.json(bairros);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao carregar dados dos bairros' });
+    }
+});
+
 // Rota principal
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

@@ -95,6 +95,46 @@
             height: 20px;
         }
 
+        .bairro-selector {
+            padding: 8px 0;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 20px;
+        }
+
+        .bairro-selector label {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .bairro-selector select {
+            flex: 1;
+            max-width: 300px;
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .bairro-selector select:hover {
+            border-color: #1f54b8;
+        }
+
+        .bairro-selector select:focus {
+            outline: none;
+            border-color: #1f54b8;
+            box-shadow: 0 0 0 3px rgba(31, 84, 184, 0.1);
+        }
+
         #map {
             flex: 1;
             width: 100%;
@@ -107,7 +147,7 @@
         }
 
         .camera-content {
-            padding: 10px;
+            padding: 0 10px;
         }
 
         .camera-popup h3 {
@@ -168,8 +208,24 @@
                 padding: 6px;
             }
 
+            .bairro-selector {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+                padding: 10px 15px;
+            }
+
+            .bairro-selector label {
+                font-size: 12px;
+            }
+
+            .bairro-selector select {
+                max-width: 100%;
+                font-size: 13px;
+            }
+
             .camera-content {
-                padding: 5px;
+                padding: 0 5px;
             }
 
             .camera-popup {
@@ -265,6 +321,25 @@
             color: #333;
             z-index: 1000;
         }
+
+        #loading-bar-parent {
+            width: 100%;
+            position: relative;
+            margin-bottom: -5px;
+        }
+
+        #loading-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 3px;
+            /* altura igual ao do YouTube */
+            width: 0;
+            background: #3a7bf3;
+            /* cor da barrinha, estilo YouTube */
+            z-index: 9999;
+            transition: width 0.2s ease-out;
+        }
     </style>
 </head>
 
@@ -293,6 +368,12 @@
         </a>
     </header>
 
+    <div class="bairro-selector">
+        <select id="bairro-select">
+            <option value="">📍 Centralizar em um bairro:</option>
+        </select>
+    </div>
+
     <div id="loading" class="loading">Carregando câmeras...</div>
     <div id="map"></div>
 
@@ -300,8 +381,29 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
+        function startLoadingBar() {
+            const bar = document.getElementById("loading-bar");
+            // Define que em 5s ela deve chegar a 100%
+            bar.style.transition = "width 5s linear";
+            requestAnimationFrame(() => {
+                bar.style.width = "100%";
+            });
+        }
+        function finishLoadingBar() {
+            const bar = document.getElementById("loading-bar");
+            bar.style.transition = "all 0.3s ease-out";
+            bar.style.width = "100%";
+            // depois some suavemente
+            setTimeout(() => {
+                bar.style.opacity = "0";
+            }, 400);
+            setTimeout(() => {
+                bar.remove();
+            }, 800);
+        }
+
         // Inicializar o mapa centrado no Rio de Janeiro
-        const map = L.map('map').setView([-22.9068, -43.1729], 14);
+        const map = L.map('map').setView([-22.9997404, -43.3659929], 14);
 
         // Adicionar camada de tiles do OpenStreetMap
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -317,6 +419,38 @@
             iconAnchor: [20, 20],
             popupAnchor: [0, -20]
         });
+
+        // Buscar dados dos bairros
+        fetch('/api/bairros')
+            .then(response => response.json())
+            .then(bairros => {
+                const select = document.getElementById('bairro-select');
+
+                // Ordenar bairros alfabeticamente
+                bairros.sort((a, b) => a.nome.localeCompare(b.nome));
+
+                // Adicionar opções ao select
+                bairros.forEach(bairro => {
+                    const option = document.createElement('option');
+                    option.value = JSON.stringify({ lat: bairro.latitude, lon: bairro.longitude });
+                    option.textContent = bairro.nome;
+                    select.appendChild(option);
+                });
+
+                // Adicionar evento de mudança
+                select.addEventListener('change', (e) => {
+                    if (e.target.value) {
+                        const { lat, lon } = JSON.parse(e.target.value);
+                        map.setView([lat, lon], 15, {
+                            animate: true,
+                            duration: 1
+                        });
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Erro ao carregar bairros:', error);
+            });
 
         // Buscar dados das câmeras
         fetch('/api/cameras')
@@ -434,12 +568,25 @@
                                     contentDiv.innerHTML = `
                                         <a href="${cameraUrl}" 
                                             style="padding-bottom: 8px; display: block;" target="_blank">Abrir em uma nova aba</a>
+                                        <div id="loading-bar-parent">
+                                            <div id="loading-bar"></div>
+                                        </div>
                                         <iframe 
                                             src="${cameraUrl}" 
                                             frameborder="0"
                                             allowfullscreen>
                                         </iframe>
                                     `;
+                                    setTimeout(() => {
+                                        startLoadingBar();
+                                        window.timeoutBarId = 0;
+                                        if (window.timeoutBarId) {
+                                            clearTimeout(window.timeoutBarId);
+                                        }
+                                        window.timeoutBarId = setTimeout(() => {
+                                            finishLoadingBar();
+                                        }, 5000);
+                                    }, 150);
 
                                 } catch (fetchError) {
                                     clearTimeout(timeoutId);

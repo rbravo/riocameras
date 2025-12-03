@@ -14,18 +14,27 @@ if (!fs.existsSync(buildDir)) {
 console.log('📄 Adaptando index.html da pasta public...');
 let htmlContent = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
 
-// Adicionar a tag script para carregar cameras-data.js ANTES do Leaflet
+// Adicionar a tag script para carregar cameras-data.js e bairros-data.js ANTES do Leaflet
 htmlContent = htmlContent.replace(
     '<!-- Leaflet JS -->',
-    '<!-- Leaflet JS -->\n    <script src="cameras-data.js"></script>'
+    '<!-- Leaflet JS -->\n    <script src="cameras-data.js"></script>\n    <script src="bairros-data.js"></script>'
 );
 
-// Substituir todo o bloco de fetch por uso direto dos dados
-const fetchPattern = /\/\/ Buscar dados das câmeras\s+fetch\('\/api\/cameras'\)\s+\.then\(response => response\.json\(\)\)\s+\.then\(data => \{([\s\S]*?)\}\)\s+\.catch\(error => \{[\s\S]*?\}\);/;
+// Substituir todo o bloco de fetch das câmeras por uso direto dos dados
+const fetchCamerasPattern = /\/\/ Buscar dados das câmeras\s+fetch\('\/api\/cameras'\)\s+\.then\(response => response\.json\(\)\)\s+\.then\(data => \{([\s\S]*?)\}\)\s+\.catch\(error => \{[\s\S]*?\}\);/;
 
-htmlContent = htmlContent.replace(fetchPattern, (match, innerCode) => {
+htmlContent = htmlContent.replace(fetchCamerasPattern, (match, innerCode) => {
     return `// Carregar dados do arquivo cameras-data.js
         const data = CAMERAS_DATA;
+        {${innerCode}}`;
+});
+
+// Substituir o fetch dos bairros por uso direto dos dados
+const fetchBairrosPattern = /\/\/ Buscar dados dos bairros\s+fetch\('\/api\/bairros'\)\s+\.then\(response => response\.json\(\)\)\s+\.then\(bairros => \{([\s\S]*?)\}\)\s+\.catch\(error => \{[\s\S]*?\}\);/;
+
+htmlContent = htmlContent.replace(fetchBairrosPattern, (match, innerCode) => {
+    return `// Carregar dados do arquivo bairros-data.js
+        const bairros = BAIRROS_DATA;
         {${innerCode}}`;
 });
 
@@ -39,7 +48,14 @@ const camerasData = `const CAMERAS_DATA = ${camerasJson}`;
 fs.writeFileSync(path.join(buildDir, 'cameras-data.js'), camerasData);
 console.log('✅ cameras-data.js gerado');
 
-// 3. Criar README
+// 3. Gerar bairros-data.js
+console.log('📊 Gerando bairros-data.js...');
+const bairrosJson = fs.readFileSync('bairros-rj.json', 'utf8');
+const bairrosData = `const BAIRROS_DATA = ${bairrosJson}`;
+fs.writeFileSync(path.join(buildDir, 'bairros-data.js'), bairrosData);
+console.log('✅ bairros-data.js gerado');
+
+// 4. Criar README
 console.log('📝 Gerando README.md...');
 const readme = `# 📦 Build para Deploy Estático
 
@@ -49,6 +65,7 @@ Esta pasta contém a versão estática do site de câmeras do Rio de Janeiro, pr
 
 - \`index.html\` - Página principal com o mapa
 - \`cameras-data.js\` - Dados das câmeras em formato JavaScript
+- \`bairros-data.js\` - Dados dos bairros do Rio de Janeiro em formato JavaScript
 
 ## 🚀 Como fazer deploy
 
@@ -105,12 +122,14 @@ console.log('✅ README.md gerado');
 
 // Estatísticas
 const htmlSize = (fs.statSync(path.join(buildDir, 'index.html')).size / 1024).toFixed(2);
-const jsSize = (fs.statSync(path.join(buildDir, 'cameras-data.js')).size / 1024).toFixed(2);
+const camerasJsSize = (fs.statSync(path.join(buildDir, 'cameras-data.js')).size / 1024).toFixed(2);
+const bairrosJsSize = (fs.statSync(path.join(buildDir, 'bairros-data.js')).size / 1024).toFixed(2);
 
 console.log('\n✨ Build concluído com sucesso!\n');
 console.log('📊 Estatísticas:');
 console.log(`   - index.html: ${htmlSize} KB`);
-console.log(`   - cameras-data.js: ${jsSize} KB`);
-console.log(`   - Total: ${(parseFloat(htmlSize) + parseFloat(jsSize)).toFixed(2)} KB`);
+console.log(`   - cameras-data.js: ${camerasJsSize} KB`);
+console.log(`   - bairros-data.js: ${bairrosJsSize} KB`);
+console.log(`   - Total: ${(parseFloat(htmlSize) + parseFloat(camerasJsSize) + parseFloat(bairrosJsSize)).toFixed(2)} KB`);
 console.log('\n📁 Arquivos prontos em: build/');
 console.log('🚀 Pronto para deploy!\n');
