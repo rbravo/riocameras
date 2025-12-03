@@ -106,6 +106,10 @@
             height: 400px;
         }
 
+        .camera-content {
+            padding: 10px;
+        }
+
         .camera-popup h3 {
             margin-bottom: 10px;
             color: #333;
@@ -113,12 +117,12 @@
         }
 
         .camera-popup iframe {
-            width: 1250px;
-            max-width: 860px;
-            height: 500px;
-            min-height: 480px;
+            width: 1940px;
+            max-width: 1940px;
+            height: 1080px;
+            min-height: 550px;
             /* zoom: 0.4; */
-            transform: scale(0.7);
+            transform: scale(0.29);
             transform-origin: 0 0;
             margin: 8px;
         }
@@ -164,6 +168,10 @@
                 padding: 6px;
             }
 
+            .camera-content {
+                padding: 5px;
+            }
+
             .camera-popup {
                 min-width: 280px;
                 max-width: 100%;
@@ -176,12 +184,12 @@
             }
 
             .camera-popup iframe {
-                width: 860px;
-                max-width: 860px;
-                height: 480px;
-                min-height: 480px;
+                width: 1950px;
+                max-width: 1950px;
+                height: 1120px;
+                min-height: 550px;
                 /* zoom: 0.4; */
-                transform: scale(0.4);
+                transform: scale(0.14);
                 transform-origin: 0 0;
                 margin: 8px;
             }
@@ -222,14 +230,18 @@
                 margin-bottom: 8px;
             }
 
+            .camera-content {
+                padding: 0px;
+            }
+
             .camera-popup iframe {
-                max-width: 880px;
+                /* max-width: 880px; */
                 min-height: 420px;
-                transform: scale(0.4);
+                transform: scale(0.17);
                 transform-origin: 0 0;
                 height: 100vw;
-                width: 880px;
-                height: 500px;
+                width: 2000px;
+                height: 1110px;
                 margin: 8px;
             }
 
@@ -325,7 +337,7 @@
                         const popupPlaceholder = `
                             <div class="camera-popup">
                                 <h3>#${camera.id} - ${camera.nome}</h3>
-                                <div id="camera-content-${camera.id}" style="padding: 20px;">
+                                <div id="camera-content-${camera.id}" class="camera-content">
                                     <p>Carregando câmera...</p>
                                 </div>
                             </div>
@@ -346,7 +358,7 @@
                                 console.error(`ContentDiv não encontrado para câmera ${cameraId}`);
                                 return;
                             }
-                            
+
                             // Função para mostrar erro
                             const showError = (statusCode, statusText = '') => {
                                 const errorMessages = {
@@ -358,9 +370,9 @@
                                     'timeout': 'Tempo limite excedido',
                                     'network': 'Erro de conexão'
                                 };
-                                
+
                                 const message = errorMessages[statusCode] || `Câmera indisponível (${statusCode || 'erro'})`;
-                                
+
                                 contentDiv.innerHTML = `
                                     <div style="text-align: center; padding: 30px 20px;">
                                         <p style="color: #d32f2f; margin-bottom: 10px; font-weight: bold;">⚠️ ${message}</p>
@@ -377,7 +389,7 @@
                                         </a>
                                     </div>
                                 `;
-                                
+
                                 // Adicionar event listener ao botão de retry
                                 setTimeout(() => {
                                     const retryBtn = document.getElementById(`retry-btn-${cameraId}`);
@@ -390,7 +402,7 @@
                                     }
                                 }, 100);
                             };
-                            
+
                             try {
                                 // Mostrar loading
                                 contentDiv.innerHTML = `
@@ -402,22 +414,22 @@
                                 // Fazer fetch para verificar o status da URL
                                 const controller = new AbortController();
                                 const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
-                                
+
                                 try {
                                     const response = await fetch(cameraUrl, {
                                         method: 'GET',
                                         signal: controller.signal
                                     });
-                                    
+
                                     clearTimeout(timeoutId);
-                                    
+
                                     // Verificar o status code
                                     if (!response.ok) {
                                         console.log(`Câmera ${cameraId}: Status ${response.status}`);
                                         showError(response.status.toString(), response.statusText);
                                         return;
                                     }
-                                    
+
                                     // Se chegou aqui, a câmera está disponível, carregar o iframe
                                     contentDiv.innerHTML = `
                                         <a href="${cameraUrl}" 
@@ -428,10 +440,10 @@
                                             allowfullscreen>
                                         </iframe>
                                     `;
-                                    
+
                                 } catch (fetchError) {
                                     clearTimeout(timeoutId);
-                                    
+
                                     if (fetchError.name === 'AbortError') {
                                         console.log(`Câmera ${cameraId}: Timeout`);
                                         showError('timeout');
@@ -440,7 +452,7 @@
                                         showError('network');
                                     }
                                 }
-                                
+
                             } catch (error) {
                                 console.error('Erro ao verificar câmera:', error);
                                 showError('network');
