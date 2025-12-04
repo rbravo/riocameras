@@ -577,9 +577,11 @@
                                             allowfullscreen>
                                         </iframe>
                                     `;
-                                    setTimeout(() => {
+                                    if(window.timeoutBarId1){
+                                        clearTimeout(window.timeoutBarId1);
+                                    }
+                                    window.timeoutBarId1 = setTimeout(() => {
                                         startLoadingBar();
-                                        window.timeoutBarId = 0;
                                         if (window.timeoutBarId) {
                                             clearTimeout(window.timeoutBarId);
                                         }
