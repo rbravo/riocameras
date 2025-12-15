@@ -104,7 +104,7 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            padding: 12px 20px;
+            padding: 8px 12px;
         }
 
         .bairro-selector label {
@@ -151,7 +151,7 @@
         }
 
         .camera-popup h3 {
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             color: #333;
             font-size: 16px;
         }
@@ -212,7 +212,7 @@
                 flex-direction: column;
                 align-items: stretch;
                 gap: 6px;
-                padding: 10px 15px;
+                padding: 5px 5px;
             }
 
             .bairro-selector label {
@@ -283,7 +283,7 @@
 
             .camera-popup h3 {
                 font-size: 12px;
-                margin-bottom: 8px;
+                margin-bottom: 5px;
             }
 
             .camera-content {
@@ -328,7 +328,7 @@
             margin-bottom: -5px;
         }
 
-        #loading-bar {
+        .loading-bar {
             position: absolute;
             top: 0;
             left: 0;
@@ -381,25 +381,45 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        function startLoadingBar() {
-            const bar = document.getElementById("loading-bar");
-            // Define que em 5s ela deve chegar a 100%
-            bar.style.transition = "width 5s linear";
+        // Objeto para armazenar os timeouts de cada câmera individualmente
+        const cameraTimeouts = {};
+
+        function startLoadingBar(cameraId) {
+            const bar = document.getElementById(`loading-bar-${cameraId}`);
+            if (!bar) return;
+            
+            // Define que em 6s ela deve chegar a 100%
+            bar.style.transition = "width 6s linear";
             requestAnimationFrame(() => {
                 bar.style.width = "100%";
             });
         }
-        function finishLoadingBar() {
-            const bar = document.getElementById("loading-bar");
+        
+        function finishLoadingBar(cameraId) {
+            const bar = document.getElementById(`loading-bar-${cameraId}`);
+            if (!bar) return;
+            
             bar.style.transition = "all 0.3s ease-out";
             bar.style.width = "100%";
             // depois some suavemente
             setTimeout(() => {
-                bar.style.opacity = "0";
+                if (bar) bar.style.opacity = "0";
             }, 400);
             setTimeout(() => {
-                bar.remove();
+                if (bar && bar.parentNode) bar.remove();
             }, 800);
+        }
+
+        function clearCameraTimeouts(cameraId) {
+            if (cameraTimeouts[cameraId]) {
+                if (cameraTimeouts[cameraId].timeout1) {
+                    clearTimeout(cameraTimeouts[cameraId].timeout1);
+                }
+                if (cameraTimeouts[cameraId].timeout2) {
+                    clearTimeout(cameraTimeouts[cameraId].timeout2);
+                }
+                delete cameraTimeouts[cameraId];
+            }
         }
 
         // Inicializar o mapa centrado no Rio de Janeiro
@@ -471,6 +491,9 @@
                         const popupPlaceholder = `
                             <div class="camera-popup">
                                 <h3>#${camera.id} - ${camera.nome}</h3>
+                                <span style="position: absolute;bottom: 10px;left: 0;right: 0;color: #bbb;font-size: 9px;z-index: 1001;">
+                                    Algumas câmeras podem demorar até 30 segundos para carregar
+                                </span>
                                 <div id="camera-content-${camera.id}" class="camera-content">
                                     <p>Carregando câmera...</p>
                                 </div>
@@ -566,28 +589,31 @@
 
                                     // Se chegou aqui, a câmera está disponível, carregar o iframe
                                     contentDiv.innerHTML = `
-                                        <a href="${cameraUrl}" 
-                                            style="padding-bottom: 8px; display: block;" target="_blank">Abrir em uma nova aba</a>
-                                        <div id="loading-bar-parent">
-                                            <div id="loading-bar"></div>
+                                        <a href="${cameraUrl}" style="display: block;width: 155px;margin: auto;background: #1f54b8;border-top-right-radius: 10px;border-top-left-radius: 10px;padding-bottom: 6px;padding-top: 3px;color: #fff;text-decoration: none;" target="_blank">
+                                            Abrir numa nova aba ◥
+                                        </a>
+                                        <div style="background: #000;">
+                                            <div id="loading-bar-parent">
+                                                <div class="loading-bar" id="loading-bar-${cameraId}"></div>
+                                            </div>
+                                            <iframe 
+                                                src="${cameraUrl}" 
+                                                frameborder="0"
+                                                allowfullscreen>
+                                            </iframe>
                                         </div>
-                                        <iframe 
-                                            src="${cameraUrl}" 
-                                            frameborder="0"
-                                            allowfullscreen>
-                                        </iframe>
                                     `;
-                                    if(window.timeoutBarId1){
-                                        clearTimeout(window.timeoutBarId1);
-                                    }
-                                    window.timeoutBarId1 = setTimeout(() => {
-                                        startLoadingBar();
-                                        if (window.timeoutBarId) {
-                                            clearTimeout(window.timeoutBarId);
-                                        }
-                                        window.timeoutBarId = setTimeout(() => {
-                                            finishLoadingBar();
-                                        }, 5000);
+                                    
+                                    // Limpar timeouts anteriores desta câmera
+                                    clearCameraTimeouts(cameraId);
+                                    
+                                    // Criar novos timeouts para esta câmera
+                                    cameraTimeouts[cameraId] = {};
+                                    cameraTimeouts[cameraId].timeout1 = setTimeout(() => {
+                                        startLoadingBar(cameraId);
+                                        cameraTimeouts[cameraId].timeout2 = setTimeout(() => {
+                                            finishLoadingBar(cameraId);
+                                        }, 6000);
                                     }, 150);
 
                                 } catch (fetchError) {
@@ -611,6 +637,11 @@
                         // Quando o popup abrir, verificar se a câmera está disponível
                         marker.on('popupopen', async () => {
                             loadCameraContent(camera.id, `https://aplicativo.cocr.com.br/camera/${camera.id}`);
+                        });
+
+                        // Quando o popup fechar, limpar os timeouts dessa câmera
+                        marker.on('popupclose', () => {
+                            clearCameraTimeouts(camera.id);
                         });
                     }
                 });
