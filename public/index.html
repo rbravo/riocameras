@@ -140,6 +140,62 @@
             width: 100%;
         }
 
+        /* Painel dockado (somente mobile) */
+        .camera-dock {
+            display: none;
+            width: 100%;
+            background: #000;
+            border-top-left-radius: 14px;
+            border-top-right-radius: 14px;
+            box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.18);
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        .camera-dock.is-open {
+            display: flex;
+        }
+
+        .camera-dock-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 12px;
+            background: #000;
+        }
+
+        .camera-dock-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            line-height: 1.2;
+            max-width: calc(100% - 44px);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .camera-dock-close {
+            appearance: none;
+            border: none;
+            background: #222222;
+            color: #fff;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .camera-dock-body {
+            flex: 1;
+            min-height: 160px;
+            overflow: hidden;
+        }
+
+        .camera-dock-body .newTabOpenBtn {
+            display: none !important;
+        }
+
         .camera-popup {
             text-align: center;
             min-width: 600px;
@@ -184,6 +240,10 @@
             border: 3px solid white;
             border-radius: 50%;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .camera-icon.camera-icon--selected {
+            background: #d32f2f;
         }
 
         /* Media Queries para Mobile */
@@ -256,6 +316,26 @@
                 max-width: 90vw;
                 height: 250px;
                 overflow: hidden;
+            }
+
+            .camera-dock {
+                height: 45vh;
+            }
+
+            .camera-dock .camera-popup {
+                min-width: unset;
+                max-width: 100%;
+                height: 100%;
+            }
+
+            .camera-dock .camera-popup iframe {
+                width: 1950px;
+                max-width: 1950px;
+                height: 1120px;
+                min-height: 550px;
+                transform: scale(0.215);
+                transform-origin: 0 0;
+                margin: 8px;
             }
         }
 
@@ -377,12 +457,88 @@
     <div id="loading" class="loading">Carregando câmeras...</div>
     <div id="map"></div>
 
+    <div id="camera-dock" class="camera-dock" aria-hidden="true">
+        <div class="camera-dock-header">
+            <div id="camera-dock-title" class="camera-dock-title"></div>
+            <button id="camera-dock-close" class="camera-dock-close" type="button">✕</button>
+        </div>
+        <div id="camera-dock-body" class="camera-dock-body"></div>
+    </div>
+
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
         // Objeto para armazenar os timeouts de cada câmera individualmente
         const cameraTimeouts = {};
+
+        let selectedMarker = null;
+        let selectedCameraId = null;
+
+        function isMobileUi() {
+            return window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+        }
+
+        function setSelectedMarker(marker) {
+            if (selectedMarker && selectedMarker !== marker) {
+                selectedMarker.setIcon(cameraIcon);
+            }
+            selectedMarker = marker;
+            if (selectedMarker) {
+                selectedMarker.setIcon(cameraIconSelected);
+            }
+        }
+
+        function clearSelectedMarker() {
+            if (selectedMarker) {
+                selectedMarker.setIcon(cameraIcon);
+            }
+            selectedMarker = null;
+        }
+
+        function openCameraDock(titleText, cameraId) {
+            const dock = document.getElementById('camera-dock');
+            const dockTitle = document.getElementById('camera-dock-title');
+            const dockBody = document.getElementById('camera-dock-body');
+
+            if (!dock || !dockTitle || !dockBody) return;
+
+            selectedCameraId = cameraId;
+            dockTitle.textContent = titleText;
+
+            dockBody.innerHTML = `
+                <div class="camera-popup">
+                    <span style="position: absolute;bottom: 10px;left: 0;right: 0;color: #bbb;font-size: 9px;z-index: 1001;">
+                        Algumas câmeras podem demorar até 30 segundos para carregar
+                    </span>
+                    <div id="camera-content-${cameraId}" class="camera-content">
+                        <p>Carregando câmera...</p>
+                    </div>
+                </div>
+            `;
+
+            dock.classList.add('is-open');
+            dock.setAttribute('aria-hidden', 'false');
+            // Leaflet precisa recalcular o layout quando a altura muda
+            setTimeout(() => map.invalidateSize(), 50);
+        }
+
+        function closeCameraDock() {
+            const dock = document.getElementById('camera-dock');
+            const dockBody = document.getElementById('camera-dock-body');
+            if (!dock || !dockBody) return;
+
+            if (selectedCameraId != null) {
+                clearCameraTimeouts(selectedCameraId);
+            }
+
+            dock.classList.remove('is-open');
+            dock.setAttribute('aria-hidden', 'true');
+            dockBody.innerHTML = '';
+            selectedCameraId = null;
+            clearSelectedMarker();
+            setTimeout(() => map.invalidateSize(), 50);
+        }
 
         function startLoadingBar(cameraId) {
             const bar = document.getElementById(`loading-bar-${cameraId}`);
@@ -440,6 +596,14 @@
             popupAnchor: [0, -20]
         });
 
+        const cameraIconSelected = L.divIcon({
+            className: 'camera-icon camera-icon--selected',
+            html: '<svg xmlns="http://www.w3.org/2000/svg" style="margin:5px;" width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>',
+            iconSize: [40, 40],
+            iconAnchor: [20, 20],
+            popupAnchor: [0, -20]
+        });
+
         // Buscar dados dos bairros
         fetch('/api/bairros')
             .then(response => response.json())
@@ -479,6 +643,15 @@
                 // Remover mensagem de loading
                 document.getElementById('loading').style.display = 'none';
 
+                const dockCloseBtn = document.getElementById('camera-dock-close');
+                if (dockCloseBtn) {
+                    dockCloseBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        closeCameraDock();
+                    });
+                }
+
                 // Adicionar marcadores para cada câmera
                 data.cameras.forEach(camera => {
                     const lat = parseFloat(camera.lat);
@@ -500,12 +673,14 @@
                             </div>
                         `;
 
-                        const popup = L.popup({
-                            maxWidth: 650,
-                            minWidth: 320
-                        }).setContent(popupPlaceholder);
+                        if (!isMobileUi()) {
+                            const popup = L.popup({
+                                maxWidth: 650,
+                                minWidth: 320
+                            }).setContent(popupPlaceholder);
 
-                        marker.bindPopup(popup);
+                            marker.bindPopup(popup);
+                        }
 
                         // Função para carregar o conteúdo da câmera
                         const loadCameraContent = async (cameraId, cameraUrl) => {
@@ -516,8 +691,17 @@
                                 return;
                             }
 
+                            // Se no mobile o usuário já trocou de câmera ou fechou o dock,
+                            // evita renderizar em um DOM que pode estar desconectado.
+                            if (isMobileUi() && selectedCameraId !== cameraId) {
+                                return;
+                            }
+
                             // Função para mostrar erro
                             const showError = (statusCode, statusText = '') => {
+                                if (!contentDiv.isConnected) return;
+                                if (isMobileUi() && selectedCameraId !== cameraId) return;
+
                                 const errorMessages = {
                                     '400': 'Requisição inválida (400 Bad Request)',
                                     '404': 'Câmera não encontrada (404)',
@@ -562,6 +746,9 @@
 
                             try {
                                 // Mostrar loading
+                                if (!contentDiv.isConnected) return;
+                                if (isMobileUi() && selectedCameraId !== cameraId) return;
+
                                 contentDiv.innerHTML = `
                                     <div style="padding: 40px 20px; color: #666; text-align: center;">
                                         <p>Verificando disponibilidade da câmera...</p>
@@ -588,8 +775,11 @@
                                     }
 
                                     // Se chegou aqui, a câmera está disponível, carregar o iframe
-                                    contentDiv.innerHTML = `
-                                        <a href="${cameraUrl}" style="display: block;width: 155px;margin: auto;background: #1f54b8;border-top-right-radius: 10px;border-top-left-radius: 10px;padding-bottom: 6px;padding-top: 3px;color: #fff;text-decoration: none;" target="_blank">
+                                    if (!contentDiv.isConnected) return;
+                                    if (isMobileUi() && selectedCameraId !== cameraId) return;
+
+                                    const iframeHtml = `
+                                        <a href="${cameraUrl}" class="newTabOpenBtn" style="display: block;width: 155px;margin: auto;background: #1f54b8;border-top-right-radius: 10px;border-top-left-radius: 10px;padding-bottom: 6px;padding-top: 3px;color: #fff;text-decoration: none;" target="_blank">
                                             Abrir numa nova aba ◥
                                         </a>
                                         <div style="background: #000;">
@@ -598,11 +788,24 @@
                                             </div>
                                             <iframe 
                                                 src="${cameraUrl}" 
+                                                style="display:block;"
                                                 frameborder="0"
                                                 allowfullscreen>
                                             </iframe>
                                         </div>
                                     `;
+
+                                    // No dock (mobile), dá um respiro pro layout recalcular antes do iframe
+                                    if (isMobileUi()) {
+                                        setTimeout(() => {
+                                            const divNow = document.getElementById(`camera-content-${cameraId}`);
+                                            if (!divNow || !divNow.isConnected) return;
+                                            if (selectedCameraId !== cameraId) return;
+                                            divNow.innerHTML = iframeHtml;
+                                        }, 50);
+                                    } else {
+                                        contentDiv.innerHTML = iframeHtml;
+                                    }
                                     
                                     // Limpar timeouts anteriores desta câmera
                                     clearCameraTimeouts(cameraId);
@@ -634,15 +837,29 @@
                             }
                         };
 
-                        // Quando o popup abrir, verificar se a câmera está disponível
-                        marker.on('popupopen', async () => {
-                            loadCameraContent(camera.id, `https://aplicativo.cocr.com.br/camera/${camera.id}`);
-                        });
+                        const cameraUrl = `https://aplicativo.cocr.com.br/camera/${camera.id}`;
 
-                        // Quando o popup fechar, limpar os timeouts dessa câmera
-                        marker.on('popupclose', () => {
-                            clearCameraTimeouts(camera.id);
-                        });
+                        if (isMobileUi()) {
+                            marker.on('click', async () => {
+                                setSelectedMarker(marker);
+                                openCameraDock(`#${camera.id} - ${camera.nome}`, camera.id);
+                                loadCameraContent(camera.id, cameraUrl);
+                            });
+                        } else {
+                            // Desktop: usar popup padrão
+                            marker.on('popupopen', async () => {
+                                setSelectedMarker(marker);
+                                loadCameraContent(camera.id, cameraUrl);
+                            });
+
+                            marker.on('popupclose', () => {
+                                clearCameraTimeouts(camera.id);
+                                if (selectedCameraId === camera.id) {
+                                    selectedCameraId = null;
+                                }
+                                clearSelectedMarker();
+                            });
+                        }
                     }
                 });
 
