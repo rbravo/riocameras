@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Câmeras do Rio de Janeiro</title>
+    <title>RioCameras.com - Câmeras do Rio de Janeiro</title>
     <meta name="author" content="Rafael Bravo">
     <!-- Google Tag Manager -->
     <script>(function (w, d, s, l, i) {
@@ -50,7 +50,8 @@
         }
 
         header {
-            background: linear-gradient(315deg, #595959 0%, #121212 100%);
+            /* background: linear-gradient(315deg, #595959 0%, #121212 100%); */
+            background: #121212;
             color: white;
             padding: 12px 20px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -82,11 +83,11 @@
             padding: 8px 12px;
             border-radius: 6px;
             transition: all 0.3s ease;
-            background: #222222;
+            background: #333333;
         }
 
         header .github-link:hover {
-            background: #333333;
+            background: #444444;
             transform: translateY(-2px);
         }
 
@@ -97,7 +98,7 @@
 
         .bairro-selector {
             padding: 8px 0;
-            background: rgba(255, 255, 255, 0.95);
+            background: #333333;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             z-index: 999;
             display: flex;
@@ -138,6 +139,20 @@
         #map {
             flex: 1;
             width: 100%;
+        }
+
+        .newTabOpenBtn {
+            display: block;
+            width: 155px;
+            margin: auto;
+            background: #1f54b8;
+            border-top-right-radius: 10px;
+            border-top-left-radius: 10px;
+            padding-bottom: 6px;
+            padding-top: 3px;
+            color: #fff !important;
+            text-decoration: none;
+            margin-bottom: -8px;
         }
 
         /* Painel dockado (somente mobile) */
@@ -435,7 +450,7 @@
                     <path
                         d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" />
                 </svg>
-                RioCameras
+                RioCameras.com
             </h1>
             <div class="info" id="camera-count">Carregando...</div>
         </div>
@@ -779,7 +794,7 @@
                                     if (isMobileUi() && selectedCameraId !== cameraId) return;
 
                                     const iframeHtml = `
-                                        <a href="${cameraUrl}" class="newTabOpenBtn" style="display: block;width: 155px;margin: auto;background: #1f54b8;border-top-right-radius: 10px;border-top-left-radius: 10px;padding-bottom: 6px;padding-top: 3px;color: #fff;text-decoration: none;" target="_blank">
+                                        <a href="${cameraUrl}" class="newTabOpenBtn" style="" target="_blank">
                                             Abrir numa nova aba ◥
                                         </a>
                                         <div style="background: #000;">
