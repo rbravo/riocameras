@@ -101,7 +101,13 @@ Use o `check-and-push.cmd` (roda o check, commita e dá push):
 1. **Agendador de Tarefas** → *Criar Tarefa Básica*.
 2. Disparador: **Diariamente**, com *Repetir a cada 3 dias*, num horário em que o PC costuma estar ligado.
 3. Ação: *Iniciar um programa* → caminho completo do `check-and-push.cmd`; em *Iniciar em*, a pasta do projeto.
-4. Teste com o botão **Executar** (leva ~40–60 min).
+4. Em *Propriedades* da tarefa, deixe **"Executar somente quando o usuário estiver conectado"** (para a janela aparecer).
+5. Teste com o botão **Executar** (leva ~40–60 min).
+
+O `check-and-push.cmd` já commita e dá push sozinho. No fim, **a janela fica
+aberta** mostrando o resultado (publicado / sem mudanças / push falhou) — assim,
+se rodar de madrugada, você vê de manhã se precisa fazer algo. Normalmente **não
+precisa**: só se aparecer que o push falhou, aí você roda `git push`.
 
 Pré-requisitos: `npm install` (instala o Playwright), **Google Chrome** instalado
 e credencial do git salva (para o `git push` rodar sem pedir senha).
