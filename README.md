@@ -74,24 +74,37 @@ riocameras/
 │   ├── cloudflare-worker.js
 │   └── wrangler.toml
 ├── .github/workflows/
-│   ├── deploy.yml          # Build + deploy no GitHub Pages (a cada push)
-│   └── check-cameras.yml   # Checa status das câmeras a cada ~3 dias
+│   └── deploy.yml       # Build + deploy no GitHub Pages (a cada push)
 ├── server.js            # Servidor Express
 ├── build-script.js      # Script de build
 ├── check-cameras.js     # Verifica quais câmeras estão no ar -> public/status.json
+├── check-and-push.cmd   # Roda o check + commit + push (para o Agendador do Windows)
 ├── deploy-github.js     # Script de deploy
 └── bairros-rj.json      # Coordenadas dos bairros (para centralizar o mapa)
 ```
 
 ## 🟢 Status das câmeras
 
-Um job agendado ([`.github/workflows/check-cameras.yml`](.github/workflows/check-cameras.yml))
-roda a cada ~3 dias, verifica quais câmeras estão transmitindo e grava
-`public/status.json`. O site lê esse arquivo e colore os marcadores
-(verde = funcionando, cinza = fora do ar, azul = ainda não verificada).
+`check-cameras.js` faz a negociação WebRTC real de cada câmera e grava em
+`public/status.json` quais estão transmitindo. Ao dar push, o `deploy.yml`
+republica o site, que colore os marcadores (verde = funcionando,
+cinza = fora do ar, azul = ainda não verificada).
 
-Dá para rodar manualmente na aba **Actions** do GitHub (botão *Run workflow*)
-ou localmente com `npm run check-cameras` (precisa de Google Chrome instalado).
+> ⚠️ **Precisa rodar de uma rede brasileira.** Os servidores de vídeo do COR
+> não entregam o stream para IPs de datacenter / fora do Brasil — por isso
+> **não** funciona em runner do GitHub Actions (acusaria tudo como offline).
+
+### Agendar a cada ~3 dias (Windows)
+
+Use o `check-and-push.cmd` (roda o check, commita e dá push):
+
+1. **Agendador de Tarefas** → *Criar Tarefa Básica*.
+2. Disparador: **Diariamente**, com *Repetir a cada 3 dias*, num horário em que o PC costuma estar ligado.
+3. Ação: *Iniciar um programa* → caminho completo do `check-and-push.cmd`; em *Iniciar em*, a pasta do projeto.
+4. Teste com o botão **Executar** (leva ~40–60 min).
+
+Pré-requisitos: `npm install` (instala o Playwright), **Google Chrome** instalado
+e credencial do git salva (para o `git push` rodar sem pedir senha).
 
 ## ⚙️ Configuração do proxy de câmeras
 
