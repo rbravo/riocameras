@@ -7,9 +7,14 @@
   "scripts": {
     "start": "node server.js",
     "build": "node build-script.js",
-    "deploy": "node deploy-github.js"
+    "deploy": "node deploy-github.js",
+    "update-cameras": "node update-cameras.js",
+    "check-cameras": "node check-cameras.js"
   },
   "dependencies": {
     "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0"
   }
 }

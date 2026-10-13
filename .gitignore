@@ -1,5 +1,6 @@
 node_modules/
-build/
 .env
 *.log
 .DS_Store
+.wrangler/
+proxy/.wrangler/

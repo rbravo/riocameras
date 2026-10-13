@@ -14,20 +14,13 @@ if (!fs.existsSync(buildDir)) {
 console.log('📄 Adaptando index.html da pasta public...');
 let htmlContent = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
 
-// Adicionar a tag script para carregar cameras-data.js e bairros-data.js ANTES do Leaflet
+// Adicionar a tag script para carregar bairros-data.js ANTES do Leaflet.
+// (As câmeras agora vêm AO VIVO da API do COR.Rio — veja CAMERAS_API no index.html —
+//  então não há mais cameras-data.js embutido.)
 htmlContent = htmlContent.replace(
     '<!-- Leaflet JS -->',
-    '<!-- Leaflet JS -->\n    <script src="cameras-data.js"></script>\n    <script src="bairros-data.js"></script>'
+    '<!-- Leaflet JS -->\n    <script src="bairros-data.js"></script>'
 );
-
-// Substituir todo o bloco de fetch das câmeras por uso direto dos dados
-const fetchCamerasPattern = /\/\/ Buscar dados das câmeras\s+fetch\('\/api\/cameras'\)\s+\.then\(response => response\.json\(\)\)\s+\.then\(data => \{([\s\S]*?)\}\)\s+\.catch\(error => \{[\s\S]*?\}\);/;
-
-htmlContent = htmlContent.replace(fetchCamerasPattern, (match, innerCode) => {
-    return `// Carregar dados do arquivo cameras-data.js
-        const data = CAMERAS_DATA;
-        {${innerCode}}`;
-});
 
 // Substituir o fetch dos bairros por uso direto dos dados
 const fetchBairrosPattern = /\/\/ Buscar dados dos bairros\s+fetch\('\/api\/bairros'\)\s+\.then\(response => response\.json\(\)\)\s+\.then\(bairros => \{([\s\S]*?)\}\)\s+\.catch\(error => \{[\s\S]*?\}\);/;
@@ -41,12 +34,29 @@ htmlContent = htmlContent.replace(fetchBairrosPattern, (match, innerCode) => {
 fs.writeFileSync(path.join(buildDir, 'index.html'), htmlContent);
 console.log('✅ index.html gerado');
 
-// 2. Gerar cameras-data.js
-console.log('📊 Gerando cameras-data.js...');
-const camerasJson = fs.readFileSync('camera_api_json.json', 'utf8');
-const camerasData = `const CAMERAS_DATA = ${camerasJson}`;
-fs.writeFileSync(path.join(buildDir, 'cameras-data.js'), camerasData);
-console.log('✅ cameras-data.js gerado');
+// Remover cameras-data.js legado (não é mais usado; lista agora é cameras.json)
+const legacyCamerasData = path.join(buildDir, 'cameras-data.js');
+if (fs.existsSync(legacyCamerasData)) {
+    fs.unlinkSync(legacyCamerasData);
+    console.log('🧹 cameras-data.js legado removido');
+}
+
+// Copiar a lista estática de câmeras (public/cameras.json -> build/cameras.json)
+console.log('📊 Copiando cameras.json...');
+fs.copyFileSync(
+    path.join(__dirname, 'public', 'cameras.json'),
+    path.join(buildDir, 'cameras.json')
+);
+console.log('✅ cameras.json copiado');
+
+// Copiar o status das câmeras, se existir (gerado por `npm run check-cameras`)
+const statusSrc = path.join(__dirname, 'public', 'status.json');
+if (fs.existsSync(statusSrc)) {
+    fs.copyFileSync(statusSrc, path.join(buildDir, 'status.json'));
+    console.log('✅ status.json copiado');
+} else {
+    console.log('ℹ️  status.json ainda não existe (rode o job de checagem)');
+}
 
 // 3. Gerar bairros-data.js
 console.log('📊 Gerando bairros-data.js...');
@@ -122,14 +132,12 @@ console.log('✅ README.md gerado');
 
 // Estatísticas
 const htmlSize = (fs.statSync(path.join(buildDir, 'index.html')).size / 1024).toFixed(2);
-const camerasJsSize = (fs.statSync(path.join(buildDir, 'cameras-data.js')).size / 1024).toFixed(2);
 const bairrosJsSize = (fs.statSync(path.join(buildDir, 'bairros-data.js')).size / 1024).toFixed(2);
 
 console.log('\n✨ Build concluído com sucesso!\n');
 console.log('📊 Estatísticas:');
 console.log(`   - index.html: ${htmlSize} KB`);
-console.log(`   - cameras-data.js: ${camerasJsSize} KB`);
 console.log(`   - bairros-data.js: ${bairrosJsSize} KB`);
-console.log(`   - Total: ${(parseFloat(htmlSize) + parseFloat(camerasJsSize) + parseFloat(bairrosJsSize)).toFixed(2)} KB`);
+console.log(`   - Total: ${(parseFloat(htmlSize) + parseFloat(bairrosJsSize)).toFixed(2)} KB`);
 console.log('\n📁 Arquivos prontos em: build/');
 console.log('🚀 Pronto para deploy!\n');

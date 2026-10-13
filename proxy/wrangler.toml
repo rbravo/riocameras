@@ -1,0 +1,8 @@
+# Config do Cloudflare Worker (proxy CORS da lista de câmeras).
+# Deploy:  cd proxy  &&  wrangler deploy
+# (requer:  npm i -g wrangler  e  wrangler login)
+
+name = "rio-cameras-proxy"
+main = "cloudflare-worker.js"
+compatibility_date = "2025-09-01"
+workers_dev = true

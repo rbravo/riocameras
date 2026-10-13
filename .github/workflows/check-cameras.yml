@@ -1,0 +1,68 @@
+name: Checar status das câmeras
+
+on:
+  schedule:
+    - cron: '0 6 */3 * *'   # a cada ~3 dias, 06:00 UTC (03:00 BRT)
+  workflow_dispatch:         # permite rodar manualmente na aba Actions
+
+permissions:
+  contents: write   # commitar public/status.json
+  pages: write      # publicar no GitHub Pages
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  check-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Chrome (para o WebRTC/H.264)
+        run: npx playwright install --with-deps chrome
+
+      - name: Checar câmeras
+        run: npm run check-cameras
+        env:
+          CONCURRENCY: '35'
+          WAIT_MS: '4000'
+
+      - name: Commitar status.json (se mudou)
+        continue-on-error: true   # se o push falhar, ainda publicamos via build/deploy
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/status.json
+          if git diff --cached --quiet; then
+            echo "Sem mudanças no status.json"
+          else
+            git commit -m "chore: atualiza status das câmeras [skip ci]"
+            git push
+          fi
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./build
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

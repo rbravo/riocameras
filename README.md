@@ -15,6 +15,7 @@ Visualizador interativo das câmeras de monitoramento do Rio de Janeiro em mapa.
 - 🗺️ Mapa interativo com todas as câmeras do Rio de Janeiro
 - 📍 Marcadores customizados para cada câmera
 - 🎥 Visualização da câmera em popup ao clicar
+- 🟢 Indicação de status: verde = funcionando, cinza = fora do ar (verificado a cada ~3 dias)
 - 🆓 100% gratuito e open source
 
 ## 🚀 Como usar
@@ -56,6 +57,7 @@ Ou configure GitHub Actions (arquivo já incluído em `.github/workflows/deploy.
 - **Node.js + Express** - Servidor de desenvolvimento
 - **Leaflet** - Biblioteca de mapas (open source)
 - **OpenStreetMap** - Tiles do mapa (gratuito)
+- **WebRTC** - Reprodução do vídeo das câmeras no navegador
 - **Vanilla JS** - Sem frameworks pesados
 
 ## 📁 Estrutura
@@ -66,26 +68,62 @@ riocameras/
 │   └── index.html
 ├── build/               # Arquivos da versão de produção (gerados)
 │   ├── index.html
-│   ├── cameras-data.js
+│   ├── bairros-data.js
 │   └── README.md
+├── proxy/               # Proxy da lista de câmeras (Cloudflare Worker)
+│   ├── cloudflare-worker.js
+│   └── wrangler.toml
+├── .github/workflows/
+│   ├── deploy.yml          # Build + deploy no GitHub Pages (a cada push)
+│   └── check-cameras.yml   # Checa status das câmeras a cada ~3 dias
 ├── server.js            # Servidor Express
 ├── build-script.js      # Script de build
+├── check-cameras.js     # Verifica quais câmeras estão no ar -> public/status.json
 ├── deploy-github.js     # Script de deploy
-└── camera_api_json.json # Dados das câmeras
+└── bairros-rj.json      # Coordenadas dos bairros (para centralizar o mapa)
 ```
 
-## 🔄 Atualizar dados das câmeras
+## 🟢 Status das câmeras
 
-1. Substitua o arquivo `camera_api_json.json`
-2. Execute `npm run build`
-3. Execute `npm run deploy` (se quiser publicar)
+Um job agendado ([`.github/workflows/check-cameras.yml`](.github/workflows/check-cameras.yml))
+roda a cada ~3 dias, verifica quais câmeras estão transmitindo e grava
+`public/status.json`. O site lê esse arquivo e colore os marcadores
+(verde = funcionando, cinza = fora do ar, azul = ainda não verificada).
+
+Dá para rodar manualmente na aba **Actions** do GitHub (botão *Run workflow*)
+ou localmente com `npm run check-cameras` (precisa de Google Chrome instalado).
+
+## ⚙️ Configuração do proxy de câmeras
+
+O mapa carrega a lista de câmeras através de um pequeno proxy
+(Cloudflare Worker, grátis — pasta [`proxy/`](proxy/)).
+
+- **Em desenvolvimento** não precisa configurar nada: o `npm start` já sobe o
+  proxy junto (o site usa `/api/cameras-live` do próprio `server.js`).
+- **Em produção** (GitHub Pages), publique o proxy e informe a URL dele no topo
+  do `<script>` em [`public/index.html`](public/index.html):
+
+  ```js
+  const WORKER_BASE = 'https://SEU-WORKER.workers.dev';
+  ```
+
+Deploy do proxy (detalhes em [`proxy/README.md`](proxy/README.md)):
+
+```bash
+npm i -g wrangler
+wrangler login
+cd proxy && wrangler deploy      # imprime a URL https://...workers.dev
+```
+
+Depois, basta `npm run build` e `npm run deploy`.
 
 ## 📝 Scripts disponíveis
 
 ```bash
-npm start        # Inicia servidor de desenvolvimento
-npm run build    # Gera build de produção
-npm run deploy   # Deploy para GitHub Pages
+npm start            # Servidor de desenvolvimento em http://localhost:3000
+npm run build        # Gera a versão estática em build/
+npm run deploy       # Publica no GitHub Pages
+npm run check-cameras # Verifica o status das câmeras -> public/status.json
 ```
 
 ## 🤝 Contribuindo
