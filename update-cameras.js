@@ -11,16 +11,32 @@ const path = require('path');
 const API = 'https://appcor.cor-rio.work/api/cameras/?limit=0';
 const OUT = path.join(__dirname, 'public', 'cameras.json');
 
+// A API alterna entre a lista completa e uma "lite" (menos câmeras).
+// Buscamos até vir a completa, para não gravar uma lista parcial.
+async function fetchFullList(tries = 14) {
+    let last = [];
+    for (let i = 0; i < tries; i++) {
+        try {
+            const r = await fetch(API, { headers: { Accept: 'application/json' } });
+            if (r.ok) {
+                const j = await r.json();
+                const a = Array.isArray(j) ? j : (j.cameras || []);
+                last = a;
+                if (a.some(c => c && c.streamUrl)) return a; // versão completa
+            }
+        } catch (e) { /* tenta de novo */ }
+        await new Promise(res => setTimeout(res, 300));
+    }
+    return last;
+}
+
 (async () => {
     console.log('↓ Buscando lista em', API);
-    const resp = await fetch(API, { headers: { Accept: 'application/json' } });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const list = await resp.json();
-    const arr = Array.isArray(list) ? list : (list.cameras || []);
+    const arr = await fetchFullList();
 
     // Mantém apenas o que é estável. O apiId é o CODE usado no streaming.
     const out = arr
-        .filter(c => c && c.cameraId != null && c.apiId)
+        .filter(c => c && c.apiId)
         .map(c => ({
             cameraId: c.cameraId,
             apiId: c.apiId,

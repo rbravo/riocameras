@@ -12,7 +12,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 // A API do COR alterna entre a lista completa (com streamUrl/token) e uma
 // versão "lite" (só coords). Buscamos até vir a completa.
-async function fetchPreferFull(url, tries = 8) {
+async function fetchPreferFull(url, tries = 14) {
     let last = [];
     for (let i = 0; i < tries; i++) {
         try {
@@ -24,7 +24,7 @@ async function fetchPreferFull(url, tries = 8) {
                 if (a.some(c => c && c.streamUrl)) return a;
             }
         } catch (e) { /* tenta de novo */ }
-        await sleep(600);
+        await sleep(300);
     }
     return last; // só veio lite
 }
@@ -59,10 +59,11 @@ app.get('/api/cameras-live', async (req, res) => {
     }
 });
 
-// Proxy SÓ do TOKEN (resposta minúscula). O token (JWT) é global e vale ~10h.
+// Proxy SÓ do TOKEN (JWT global, vale ~10h). Tiramos da mesma lista completa
+// (?limit=0) — o ?limit=1 passou a vir sempre "lite", sem token.
 app.get('/api/token', async (req, res) => {
     try {
-        const data = await cachedFull(COR_API + '?limit=1', 300000);
+        const data = await cachedFull(COR_API + '?limit=0', 120000);
         const withStream = data.find(c => c && c.streamUrl);
         const key = withStream ? new URL(withStream.streamUrl).searchParams.get('KEY') : null;
         if (!key) throw new Error('token não encontrado (API só devolveu lista lite)');

@@ -33,7 +33,8 @@ export default {
     let resp = await cache.match(cacheKey);
     if (resp) return resp;
 
-    const list = await fetchPreferFull(isToken ? API + '?limit=1' : API + '?limit=0');
+    // Sempre a lista completa (?limit=0). O ?limit=1 passou a vir sempre "lite".
+    const list = await fetchPreferFull(API + '?limit=0');
 
     if (isToken) {
       const withStream = list.find(c => c && c.streamUrl);
@@ -50,7 +51,7 @@ export default {
   }
 };
 
-async function fetchPreferFull(url, tries = 6) {
+async function fetchPreferFull(url, tries = 14) {
   let last = [];
   for (let i = 0; i < tries; i++) {
     try {

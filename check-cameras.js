@@ -26,7 +26,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 // A API alterna entre a lista completa (com streamUrl) e uma "lite" (só coords).
 // Buscamos até vir a completa (tem o token e todas as câmeras).
-async function fetchFullList(maxTries = 8) {
+async function fetchFullList(maxTries = 14) {
   let last = [];
   for (let i = 0; i < maxTries; i++) {
     try {
