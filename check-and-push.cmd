@@ -19,7 +19,7 @@ REM Especifica origin/master para nao depender de tracking configurado.
 echo [%date% %time%] Atualizando repo (git pull)...
 git pull --rebase origin master
 
-echo [%date% %time%] Checando status das cameras... (leva ~40-60 min)
+echo [%date% %time%] Checando status das cameras... (LENTO: ~2-4h, por causa do limite de taxa do COR; rode a noite)
 echo.
 call npm run check-cameras
 if errorlevel 1 goto checkfail
