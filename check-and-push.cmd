@@ -15,8 +15,9 @@ title Check de status das cameras - RioCameras
 cd /d "%~dp0"
 
 REM Mantem o repo local atualizado (arvore limpa aqui, entao e seguro).
+REM Especifica origin/master para nao depender de tracking configurado.
 echo [%date% %time%] Atualizando repo (git pull)...
-git pull --rebase
+git pull --rebase origin master
 
 echo [%date% %time%] Checando status das cameras... (leva ~40-60 min)
 echo.

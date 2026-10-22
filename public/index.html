@@ -802,24 +802,29 @@
             });
 
         // ============================================================
-        //  Feed de câmeras (COR.Rio) — API nova + player WebRTC (WHEP)
+        //  Feed de câmeras (COR.Rio) — player WebRTC (WHEP) via proxy
         // ------------------------------------------------------------
         //  Lista:   GET https://appcor.cor-rio.work/api/cameras/?limit=0
-        //           -> [{ cameraId, apiId, nome, lat, lon, streamUrl, ... }]
-        //  streamUrl: https://dev.tixxi.rio/video?CODE=000001&KEY=<JWT>
-        //  O vídeo é WebRTC. Fluxo (o mesmo do player oficial):
-        //    POST {origin}/app/session/start   {code,key}      -> { sessionId }
-        //    POST {origin}/app/whep/{sessionId}  (SDP offer)   -> SDP answer
-        //    POST {origin}/app/session/heartbeat {sessionId}   (a cada 20s)
-        //  (ao fechar só paramos o heartbeat; a sessão expira por timeout)
-        //  OBS: appcor.cor-rio.work/camera/{id}/ e dev.tixxi.rio/video mandam
-        //  X-Frame-Options: DENY, então NÃO dá para usar <iframe>; por isso
-        //  reimplementamos o player aqui dentro de um <video>.
+        //           -> [{ cameraId, apiId, nome, lat, lon, ... }]  (sem token)
+        //  O vídeo é WebRTC. Fluxo do player oficial (apiId = "000001"):
+        //    POST /api/camera/player/session/start/{apiId}/  {}    -> { sessionId }
+        //    POST /api/camera/player/whep/{sessionId}/  (SDP offer) -> SDP answer
+        //         (o header Link do WHEP traz os ICE servers/TURN a usar)
+        //    POST /api/camera/player/session/heartbeat/ {sessionId} (a cada 20s)
+        //    POST /api/camera/player/session/stop/      {sessionId} (ao fechar)
+        //  Essa sinalização exige header Origin same-origin e não libera CORS,
+        //  então passa toda pelo proxy (SIGNAL_BASE), que injeta o Origin. A
+        //  mídia conecta direto nos servidores do COR via ICE/TURN.
+        //  OBS: appcor.cor-rio.work/camera/{id}/ manda X-Frame-Options: DENY,
+        //  então NÃO dá para usar <iframe>; por isso reimplementamos o player.
         // ============================================================
         // --- Configuração da fonte de dados ---------------------------------
-        // MODO ATIVO: proxy-lista. O Worker (Cloudflare) devolve a lista COMPLETA,
-        // já com os tokens embutidos em cada streamUrl — assim nada é estático e
-        // câmeras novas aparecem sozinhas, sem precisar atualizar/publicar.
+        // O COR mudou a API: não há mais token/streamUrl embutido. O vídeo agora
+        // usa uma sessão same-origin (POST .../session/start/{apiId} + WHEP), que o
+        // browser não pode chamar direto de outra origem (o COR exige o header
+        // Origin e não libera CORS). Por isso TODA a sinalização passa pelo proxy
+        // (Worker em produção, server.js em dev), que injeta o Origin e devolve com
+        // CORS. A mídia (WebRTC) conecta direto nos servidores do COR via ICE/TURN.
         //
         //  >>> Troque WORKER_BASE pela URL do seu Worker depois de publicá-lo. <<<
         const WORKER_BASE = 'https://rio-cameras-proxy.rafaelbravo.workers.dev';
@@ -827,15 +832,14 @@
         // Em dev (localhost) usa o proxy do server.js; em produção usa o Worker.
         const isLocalhost = ['localhost', '127.0.0.1'].includes(location.hostname);
         const CAMERAS_LIST = isLocalhost ? '/api/cameras-live' : (WORKER_BASE + '/');
-        // O token vem separado (do proxy, que faz retry até a API devolver a versão
-        // completa). Assim o vídeo funciona mesmo quando a lista vem "lite", sem token.
-        const TOKEN_API = isLocalhost ? '/api/token' : (WORKER_BASE + '/token');
+        // Base da sinalização de vídeo (mesmas rotas no server.js e no Worker).
+        const SIGNAL_BASE = isLocalhost ? '' : WORKER_BASE;
 
         // --- Alternativa (lista estática), se algum dia quiser ---------------
         //   const CAMERAS_LIST = 'cameras.json';  // gerado por `npm run update-cameras`
 
-        const STREAM_ORIGIN = 'https://dev.tixxi.rio'; // servidor de vídeo (WebRTC/WHEP)
-        let STREAM_KEY = null;                          // token global (só no modo híbrido)
+        // Servidor do COR (usado só no "probe" do banner de fora-do-ar).
+        const STREAM_ORIGIN = 'https://appcor.cor-rio.work';
 
         // Status das câmeras (gerado pelo job em .github/workflows/check-cameras.yml).
         // Marca cada marcador como online (verde) / offline (cinza) / não-checada (azul).
@@ -846,12 +850,17 @@
         function stopPlayer(cameraId) {
             const p = activePlayers[cameraId];
             if (!p) return;
-            // Paramos o heartbeat e fechamos a conexão; a sessão no servidor do
-            // COR expira sozinha por timeout. (Não chamamos /app/session/stop:
-            // é cross-origin com credenciais e o servidor bloqueia por CORS.)
+            // Paramos o heartbeat, zeramos os handlers (p/ fechar sem disparar
+            // "conexão perdida") e encerramos a sessão no COR via proxy.
             try { if (p.heartbeat) clearInterval(p.heartbeat); } catch (e) { }
             try { if (p.watchdog) clearTimeout(p.watchdog); } catch (e) { }
-            try { if (p.pc) p.pc.close(); } catch (e) { }
+            try { if (p.pc) { p.pc.ontrack = null; p.pc.onconnectionstatechange = null; p.pc.close(); } } catch (e) { }
+            try {
+                if (p.sessionId) fetch(SIGNAL_BASE + '/stop', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId: p.sessionId }), keepalive: true
+                }).catch(() => { });
+            } catch (e) { }
             delete activePlayers[cameraId];
         }
 
@@ -865,25 +874,43 @@
             });
         }
 
-        // Negocia e inicia o stream WebRTC da câmera dentro de videoEl.
-        async function startCameraStream(cam, videoEl, onError) {
-            const streamOrigin = cam.streamUrl ? new URL(cam.streamUrl).origin : STREAM_ORIGIN;
-            const key = STREAM_KEY || cam.key;
-            const fail = (msg) => { stopPlayer(cam.cameraId); if (onError) onError(msg); };
-            if (!key) return fail('Sem token de acesso (configure TOKEN_API)');
+        // Extrai os ICE servers (TURN) do header Link do WHEP (rel="ice-server").
+        function parseWhepIceServers(linkHeader) {
+            if (!linkHeader) return [];
+            const servers = [];
+            for (const part of linkHeader.split(/,(?=\s*<)/)) {
+                const m = part.match(/<([^>]+)>/);
+                if (!m || !/rel\s*=\s*"ice-server"/i.test(part)) continue;
+                const s = { urls: m[1] };
+                const u = part.match(/username\s*=\s*"([^"]+)"/i);
+                const c = part.match(/credential\s*=\s*"([^"]+)"/i);
+                if (u) s.username = u[1];
+                if (c) s.credential = c[1];
+                servers.push(s);
+            }
+            return servers;
+        }
 
-            let pc;
+        // Negocia e inicia o stream WebRTC da câmera dentro de videoEl.
+        // Fluxo novo do COR (via proxy): session/start -> WHEP. O WHEP devolve,
+        // no header Link, os ICE servers (TURN) a usar; como o RTCPeerConnection
+        // precisa deles já na criação, fazemos como o player oficial: a 1ª
+        // tentativa (STUN) só descobre os ICE servers e, se vierem, reconecta
+        // usando-os (uma vez; iceServers != null impede loop).
+        async function startCameraStream(cam, videoEl, onError, iceServers) {
+            const fail = (msg) => { stopPlayer(cam.cameraId); if (onError) onError(msg); };
+            let pc, sessionId;
             try {
-                const sResp = await fetch(streamOrigin + '/app/session/start', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code: cam.code, key: key })
+                const sResp = await fetch(SIGNAL_BASE + '/session/start/' + encodeURIComponent(cam.code), {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
                 });
                 const sData = await sResp.json().catch(() => ({}));
                 if (!sResp.ok) return fail(sData.error || 'Falha ao registrar sessão');
-                const sessionId = sData.sessionId;
+                sessionId = sData.sessionId;
+                if (!sessionId) return fail('Sessão de vídeo inválida');
 
-                pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+                const defaults = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }];
+                pc = new RTCPeerConnection({ bundlePolicy: 'max-bundle', iceServers: (iceServers && iceServers.length) ? iceServers : defaults });
                 pc.addTransceiver('video', { direction: 'recvonly' });
                 pc.addTransceiver('audio', { direction: 'recvonly' });
                 pc.ontrack = (evt) => { if (evt.streams && evt.streams[0]) videoEl.srcObject = evt.streams[0]; };
@@ -893,31 +920,38 @@
                 };
 
                 const heartbeat = setInterval(() => {
-                    fetch(streamOrigin + '/app/session/heartbeat', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                    fetch(SIGNAL_BASE + '/heartbeat', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ sessionId })
                     }).catch(() => { });
                 }, 20000);
 
-                activePlayers[cam.cameraId] = { pc, sessionId, streamOrigin, heartbeat };
+                activePlayers[cam.cameraId] = { pc, sessionId, heartbeat };
 
                 const offer = await pc.createOffer();
                 await pc.setLocalDescription(offer);
                 await waitIceGathering(pc);
 
-                const wResp = await fetch(streamOrigin + '/app/whep/' + sessionId, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/sdp' },
+                const wResp = await fetch(SIGNAL_BASE + '/whep/' + encodeURIComponent(sessionId), {
+                    method: 'POST', headers: { 'Content-Type': 'application/sdp' },
                     body: pc.localDescription.sdp
                 });
+                const answerSdp = await wResp.text();
                 if (!wResp.ok) {
-                    const txt = await wResp.text().catch(() => '');
                     let msg = 'Câmera sem sinal ou offline';
-                    try { const j = JSON.parse(txt); if (j.error) msg = j.error; } catch (e) { }
+                    try { const j = JSON.parse(answerSdp); if (j.error) msg = j.error; } catch (e) { }
                     return fail(msg);
                 }
-                const answerSdp = await wResp.text();
+
+                // Descoberta dos ICE servers (TURN) e reconexão (1x) com eles.
+                if (!iceServers || !iceServers.length) {
+                    const discovered = parseWhepIceServers(wResp.headers.get('Link'));
+                    if (discovered.length) {
+                        stopPlayer(cam.cameraId); // handlers já zerados; não dispara erro
+                        return startCameraStream(cam, videoEl, onError, discovered);
+                    }
+                }
+
                 await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
 
                 // Watchdog: a negociação pode dar OK mas a câmera estar offline
@@ -936,26 +970,21 @@
                 }, { once: true });
             } catch (e) {
                 console.error('Erro WHEP:', e);
-                if (pc) { try { pc.close(); } catch (_) { } }
-                showServerDownBanner(); // erro de rede ao falar com o servidor de vídeo
+                if (pc) { try { pc.ontrack = null; pc.onconnectionstatechange = null; pc.close(); } catch (_) { } }
+                showServerDownBanner(); // erro de rede ao falar com o proxy/servidor de vídeo
                 fail('Servidor de vídeo inacessível');
             }
         }
 
         // Normaliza um item da API nova para o formato usado aqui.
         function normalizeCamera(c) {
-            const streamUrl = c.streamUrl || '';
-            let key = '';
-            if (streamUrl) { try { key = new URL(streamUrl).searchParams.get('KEY') || ''; } catch (e) { } }
             return {
                 // id = apiId: único campo presente em TODAS as variações da API
                 cameraId: c.apiId || String(c.cameraId || ''),
-                code: c.apiId || c.code,       // "000001"
+                code: c.apiId || c.code,       // "000001" (usado no session/start)
                 nome: c.nome || 'Câmera',
                 lat: parseFloat(c.lat),
                 lon: parseFloat(c.lon),
-                key: key,                      // vazio no modo estático (usa STREAM_KEY)
-                streamUrl: streamUrl,
                 // página oficial (abre como aba top-level; não serve p/ iframe).
                 // A URL usa o apiId (CODE), NÃO o cameraId — é assim que o app faz.
                 pageUrl: 'https://appcor.cor-rio.work/camera/' + String(c.apiId || c.code || '').replace(/\D+/g, '') + '/?app=1'
@@ -967,15 +996,8 @@
             Object.keys(activePlayers).forEach(stopPlayer);
         });
 
-        // Carrega o token fresco + a lista (estática ou via proxy) e monta o mapa.
+        // Carrega a lista (estática ou via proxy) e monta o mapa.
         (async function boot() {
-            if (TOKEN_API) {
-                try {
-                    const t = await (await fetch(TOKEN_API)).json();
-                    if (t && t.key) STREAM_KEY = t.key;
-                } catch (e) { console.warn('Falha ao obter token fresco; usando token embutido na lista, se houver.', e); }
-            }
-
             let list;
             try {
                 const r = await fetch(CAMERAS_LIST);
@@ -1015,13 +1037,6 @@
                 }
 
                 const cameras = (Array.isArray(list) ? list : (list.cameras || [])).map(normalizeCamera);
-
-                // Resiliência aos dois modos da API: se o /token falhou mas a lista
-                // veio COMPLETA (token embutido no streamUrl), usa esse token.
-                if (!STREAM_KEY) {
-                    const withKey = cameras.find(c => c.key);
-                    if (withKey) STREAM_KEY = withKey.key;
-                }
 
                 cameras.forEach(cam => {
                     if (isNaN(cam.lat) || isNaN(cam.lon)) return;

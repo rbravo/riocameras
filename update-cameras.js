@@ -22,7 +22,7 @@ async function fetchFullList(tries = 14) {
                 const j = await r.json();
                 const a = Array.isArray(j) ? j : (j.cameras || []);
                 last = a;
-                if (a.some(c => c && c.streamUrl)) return a; // versão completa
+                if (a.some(c => c && c.cameraId)) return a; // versão completa
             }
         } catch (e) { /* tenta de novo */ }
         await new Promise(res => setTimeout(res, 300));

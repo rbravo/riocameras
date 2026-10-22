@@ -1,7 +1,19 @@
 # Proxy de câmeras (Cloudflare Worker)
 
-Pequeno proxy que serve a lista de câmeras para o site em produção.
+Proxy que serve, para o site em produção:
+- a **lista** de câmeras (`GET /`), e
+- a **sinalização de vídeo** (`POST /session/start/{apiId}`, `/whep/{sessionId}`,
+  `/heartbeat`, `/stop`).
+
+O COR removeu o token embutido e passou a exigir uma sessão **same-origin** para o
+vídeo (responde 403 sem o header `Origin`, e não libera CORS). O Worker injeta esse
+`Origin` e devolve com CORS, expondo o header `Link` do WHEP (ICE servers/TURN). A
+mídia (WebRTC) conecta direto nos servidores do COR.
+
 Grátis (100 mil requisições/dia no plano free).
+
+> ⚠️ Sempre que mudar `cloudflare-worker.js`, rode `wrangler deploy` de novo —
+> senão o vídeo do site publicado para de funcionar.
 
 ## Deploy
 
