@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RioCameras.com - Câmeras do Rio de Janeiro</title>
     <meta name="author" content="Rafael Bravo">
+    <meta name="theme-color" content="#0f1113">
     <!-- Google Tag Manager -->
     <script>(function (w, d, s, l, i) {
             w[l] = w[l] || []; w[l].push({
@@ -26,280 +27,1167 @@
         gtag('config', 'G-MZP06CBV83');
     </script>
 
+    <!-- Fontes: Geist (UI) e Geist Mono (IDs, contadores, meta) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet.markercluster (só o CSS base; o visual dos clusters é nosso) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
 
     <style>
+        :root {
+            --bg: #0f1113;
+            --surface: #1b1e22;
+            --surface-2: #16191c;
+            --line: #2c3036;
+            --line-2: #363b42;
+            --text: #f1f3f5;
+            --muted: #a4aab2;
+            --muted-2: #8f959d;
+            --live: #4fd18b;
+            --off: #7b8088;
+            --brt: #5a95e6;
+            --link: #9fe3bd;
+            --link-hover: #d4f5e2;
+            --mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        [hidden] {
+            display: none !important;
+        }
+
+        html {
+            background: var(--bg);
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             height: 100vh;
+            height: 100dvh;
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Geist, system-ui, -apple-system, 'Segoe UI', sans-serif;
+            font-size: 14px;
         }
 
-        .vbox {
+        a {
+            color: var(--link);
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: var(--link-hover);
+        }
+
+        button {
+            font: inherit;
+        }
+
+        .mono {
+            font-family: var(--mono);
+        }
+
+        /* Ícones SVG de traço (herdam a cor do texto) */
+        .ic {
+            flex: none;
+            width: 14px;
+            height: 14px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        @keyframes rcPulse {
+            0% { box-shadow: 0 0 0 0 rgba(79, 209, 139, 0.6); }
+            70% { box-shadow: 0 0 0 7px rgba(79, 209, 139, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(79, 209, 139, 0); }
+        }
+
+        .live-dot {
+            display: inline-block;
+            flex: none;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--live);
+            animation: rcPulse 1.8s infinite;
+        }
+
+        /* ---------------- Header ---------------- */
+        .rc-header {
+            position: relative;
+            z-index: 1100;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px 20px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--line);
+            background: var(--bg);
+        }
+
+        .brand {
             display: flex;
             flex-direction: column;
+            line-height: 1.15;
         }
 
-        header {
-            /* background: linear-gradient(315deg, #595959 0%, #121212 100%); */
-            background: #121212;
-            color: white;
-            padding: 12px 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+        .brand-name {
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: -0.01em;
         }
 
-        header h1 {
-            font-size: 24px;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .brand-count {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--muted);
         }
 
-        header .info {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        header .github-link {
+        .status-pills {
             display: flex;
             align-items: center;
             gap: 6px;
-            color: white;
-            text-decoration: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-            background: #333333;
         }
 
-        header .github-link:hover {
-            background: #444444;
-            transform: translateY(-2px);
-        }
-
-        header .github-link svg {
-            width: 20px;
-            height: 20px;
-        }
-
-        .bairro-selector {
-            padding: 8px 0;
-            background: #333333;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            z-index: 999;
+        .pill {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 8px 12px;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
         }
 
-        .bairro-selector label {
-            font-weight: 600;
-            color: #333;
-            font-size: 14px;
+        .pill-live {
+            background: rgba(79, 209, 139, 0.12);
+            color: #a6e6c0;
         }
 
-        .bairro-selector select {
+        .pill-off {
+            background: var(--line);
+            color: #b4b9c0;
+        }
+
+        .off-dot {
+            flex: none;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--off);
+        }
+
+        .search {
+            position: relative;
+            flex: 1 1 300px;
+            max-width: 520px;
+            margin-left: auto;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            height: 40px;
+            padding: 0 12px;
+            border-radius: 10px;
+            background: var(--surface);
+            border: 1px solid #30353b;
+        }
+
+        .search-box:focus-within {
+            border-color: #4a5058;
+        }
+
+        .search-icon {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--muted-2);
+        }
+
+        .search-box input {
             flex: 1;
-            max-width: 300px;
-            padding: 8px 12px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            background: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .bairro-selector select:hover {
-            border-color: #1f54b8;
-        }
-
-        .bairro-selector select:focus {
+            min-width: 0;
+            background: transparent;
+            border: 0;
             outline: none;
-            border-color: #1f54b8;
-            box-shadow: 0 0 0 3px rgba(31, 84, 184, 0.1);
+            color: var(--text);
+            font: inherit;
+            font-size: 14px;
         }
 
-        #map {
-            flex: 1;
-            width: 100%;
+        .search-box input::placeholder {
+            color: #7d838b;
         }
 
-        .newTabOpenBtn {
-            display: block;
-            width: 155px;
-            margin: auto;
-            background: #1f54b8;
-            border-top-right-radius: 10px;
-            border-top-left-radius: 10px;
-            padding-bottom: 6px;
-            padding-top: 3px;
-            color: #fff !important;
-            text-decoration: none;
-            margin-bottom: -8px;
-        }
-
-        /* Painel dockado (somente mobile) */
-        .camera-dock {
+        .search-box input::-webkit-search-cancel-button {
             display: none;
-            width: 100%;
-            background: #000;
-            border-top-left-radius: 14px;
-            border-top-right-radius: 14px;
-            box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.18);
-            overflow: hidden;
+        }
+
+        .kbd {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: #7d838b;
+            padding: 2px 6px;
+            border: 1px solid var(--line-2);
+            border-radius: 5px;
+        }
+
+        .search-dropdown {
+            position: absolute;
+            top: 46px;
+            left: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: min(70vh, 460px);
+            overflow-y: auto;
+            padding: 8px;
+            background: var(--surface);
+            border: 1px solid #30353b;
+            border-radius: 12px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+        }
+
+        .sd-label {
+            padding: 4px 6px 0;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--muted-2);
+        }
+
+        .sd-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 0 4px;
+        }
+
+        .sd-chip {
+            padding: 5px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--line-2);
+            background: #23262b;
+            color: #e6e9ec;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .sd-chip:hover {
+            background: #2f3338;
+        }
+
+        .sd-rows {
+            display: flex;
             flex-direction: column;
         }
 
-        .camera-dock.is-open {
-            display: flex;
-        }
-
-        .camera-dock-header {
+        .sd-row {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 6px 12px;
-            background: #000;
+            gap: 10px;
+            padding: 8px 6px;
+            border: 0;
+            border-radius: 8px;
+            background: transparent;
+            color: inherit;
+            text-align: left;
+            cursor: pointer;
         }
 
-        .camera-dock-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: #fff;
-            line-height: 1.2;
-            max-width: calc(100% - 44px);
+        .sd-row:hover {
+            background: #26292e;
+        }
+
+        .sd-dot {
+            flex: none;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        /* Nome + bairro lado a lado (no mobile, um embaixo do outro) */
+        .sd-text {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sd-name {
+            flex: 1;
+            min-width: 0;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        .camera-dock-close {
-            appearance: none;
-            border: none;
-            background: #222222;
-            color: #fff;
+        .sd-bairro {
+            flex: none;
+            font-family: var(--mono);
+            font-size: 11px;
+            color: #8a9098;
+        }
+
+        .sd-empty {
+            padding: 8px 6px;
+            font-size: 13px;
+            color: var(--muted-2);
+        }
+
+        .github-link {
+            display: flex;
+            align-items: center;
+            height: 40px;
+            padding: 0 14px;
+            border-radius: 10px;
+            border: 1px solid #30353b;
+            color: #d0d4d9;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .github-link:hover {
+            color: var(--text);
+            border-color: #3a3f46;
+        }
+
+        /* ---------------- Corpo: mapa + fixadas ---------------- */
+        .rc-body {
+            flex: 1;
+            display: flex;
+            min-height: 0;
+        }
+
+        .map-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 0;
+            isolation: isolate;
+        }
+
+        #map {
+            position: absolute;
+            inset: 0;
+        }
+
+        .leaflet-container {
+            background: var(--bg);
+            font-family: Geist, system-ui, sans-serif;
+        }
+
+        .leaflet-control-attribution {
+            background: rgba(15, 17, 19, 0.7) !important;
+            color: #8a9098 !important;
+            font-size: 10px !important;
+        }
+
+        .leaflet-control-attribution a {
+            color: #8a9098;
+        }
+
+        .leaflet-bar {
+            border: 1px solid var(--line) !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .leaflet-bar a {
+            background: var(--surface) !important;
+            color: #e9ecef !important;
+            border-color: var(--line) !important;
+        }
+
+        .leaflet-bar a:hover {
+            background: #26292e !important;
+        }
+
+        /* Clusters de câmeras próximas (Leaflet.markercluster) */
+        .rc-cluster {
+            background: transparent;
+            border: 0;
+        }
+
+        /* Anel = proporção de cada cor de ponto; o fundo vem inline (conic-gradient) */
+        .cl {
+            width: 100%;
+            height: 100%;
+            padding: 2.5px;
+            border-radius: 50%;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+            transition: transform 0.15s ease;
+        }
+
+        .cl > span {
+            display: grid;
+            place-items: center;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: var(--surface);
+            color: #eef0f2;
+            font-family: var(--mono);
+            font-size: 10.5px;
+            font-weight: 500;
+            letter-spacing: -0.02em;
+        }
+
+        .rc-cluster:hover .cl {
+            transform: scale(1.08);
+        }
+
+        /* Carregamento inicial (e erro, com "Tentar novamente") */
+        .loading {
+            position: absolute;
+            inset: 0;
+            z-index: 950;
+            display: grid;
+            place-items: center;
+            padding: 16px;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading.is-done {
+            opacity: 0;
+        }
+
+        .loading-card {
+            pointer-events: auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px 12px;
+            min-width: 280px;
+            max-width: 100%;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--line-2);
+            background: rgba(22, 25, 28, 0.92);
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+        }
+
+        .loading-spinner {
+            flex: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid var(--line-2);
+            border-top-color: var(--live);
+            animation: rcSpin 0.8s linear infinite;
+        }
+
+        @keyframes rcSpin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-error-icon {
+            display: none;
+            flex: none;
+            place-items: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(255, 155, 143, 0.14);
+            color: #ff9b8f;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .loading-text {
+            flex: 1 1 180px;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .loading-title {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .loading-step {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .loading-card .loading-retry {
+            display: none;
+            flex: none;
+        }
+
+        .loading.is-error .loading-spinner {
+            display: none;
+        }
+
+        .loading.is-error .loading-error-icon {
+            display: grid;
+        }
+
+        .loading.is-error .loading-retry {
+            display: inline-flex;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .loading-spinner {
+                animation-duration: 2.4s;
+            }
+        }
+
+        /* Filtros flutuantes sobre o mapa */
+        .filter-chips {
+            position: absolute;
+            left: 12px;
+            top: 12px;
+            z-index: 900;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            max-width: calc(100% - 24px);
+        }
+
+        .chip {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            height: 32px;
+            padding: 0 12px;
+            border-radius: 999px;
+            border: 1px solid #3a3f46;
+            background: rgba(27, 30, 34, 0.92);
+            color: #eef0f2;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+        }
+
+        .chip-swatch {
+            flex: none;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--swatch);
+            border: 2px solid var(--ring);
+        }
+
+        .chip-label {
+            white-space: nowrap;
+        }
+
+        .chip-count {
+            font-family: var(--mono);
+            font-size: 11px;
+            opacity: 0.7;
+        }
+
+        .chip[aria-pressed="false"] {
+            background: rgba(15, 17, 19, 0.7);
+            border-color: #2a2e33;
+            color: #7d838b;
+        }
+
+        .chip[aria-pressed="false"] .chip-swatch {
+            background: transparent;
+            border-color: #5a6068;
+        }
+
+        /* "Ao vivo": duas bolinhas sobrepostas (verde + azul) = os dois tipos no ar */
+        .chip-duo {
+            flex: none;
+            display: flex;
+        }
+
+        .chip-duo i {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--c);
+            border: 2px solid var(--c);
+        }
+
+        .chip-duo i + i {
+            margin-left: -2px;
+            box-shadow: 0 0 0 1.5px #1b1e22; /* separa da primeira */
+        }
+
+        .chip[aria-pressed="false"] .chip-duo i {
+            background: transparent;
+            border-color: #5a6068;
+            box-shadow: none;
+        }
+
+        /* Feed de vídeo (popup, card fixado e painel do mobile) */
+        .feed {
+            position: relative;
+            overflow: hidden;
+            aspect-ratio: 16 / 9;
+            border-radius: 10px;
+            background: repeating-linear-gradient(135deg, #1d2024 0 10px, #222529 10px 20px);
+        }
+
+        .feed.is-playing {
+            background: #000;
+        }
+
+        .feed video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .feed-status {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--muted-2);
+            pointer-events: none;
+        }
+
+        .feed-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.6);
+            color: var(--text);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+        }
+
+        .feed-badge.off {
+            color: #b4b9c0;
+        }
+
+        .feed-note {
+            position: absolute;
+            bottom: 8px;
+            right: 10px;
+            z-index: 2;
+            font-family: var(--mono);
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .feed.is-playing .feed-status,
+        .feed.is-playing .feed-note {
+            display: none;
+        }
+
+        .feed .loading-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 3;
+            width: 0;
+            height: 3px;
+            background: var(--live);
+            transition: width 0.2s ease-out;
+        }
+
+        .feed-error {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 36px 16px 12px;
+            text-align: center;
+        }
+
+        .feed-error-msg {
+            font-size: 13px;
+            font-weight: 600;
+            color: #ff9b8f;
+            text-wrap: pretty;
+        }
+
+        .feed-error-hint {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .feed-error-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .btn-small {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            height: 32px;
+            padding: 0 12px;
             border-radius: 8px;
-            padding: 8px 10px;
+            border: 1px solid var(--line-2);
+            background: var(--surface);
+            color: #e6e9ec;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-small:hover {
+            background: #26292e;
+            color: var(--text);
+        }
+
+        /* Linha "#id · bairro · tipo" */
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 8px;
+            font-family: var(--mono);
+            font-size: 11px;
+            color: #959ba3;
+        }
+
+        /* Popup da câmera (desktop), ancorado ao marcador */
+        .cam-popup {
+            position: absolute;
+            z-index: 1000;
+            width: 420px;
+            max-width: calc(100% - 24px);
+            max-height: calc(100% - 24px);
+            overflow: auto;
+            background: var(--surface-2);
+            border: 1px solid var(--line-2);
+            border-radius: 14px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+        }
+
+        .cp-head {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 12px 10px 14px;
+        }
+
+        .cp-headtext,
+        .m-headtext {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .cp-title {
+            font-weight: 600;
+            font-size: 15px;
+            line-height: 1.3;
+            text-wrap: pretty;
+        }
+
+        .cp-close {
+            flex: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            border: 0;
+            background: var(--line);
+            color: #d0d4d9;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .cp-close:hover,
+        .m-close:hover,
+        .pin-x:hover {
+            background: var(--line-2);
+            color: var(--text);
+        }
+
+        .cp-feed {
+            margin: 0 10px;
+        }
+
+        .cp-actions {
+            display: flex;
+            gap: 8px;
+            padding: 10px;
+        }
+
+        .btn-primary {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            height: 38px;
+            border-radius: 9px;
+            border: 0;
+            background: var(--live);
+            color: var(--bg);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background: #66da9c;
+        }
+
+        .btn-secondary {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            height: 38px;
+            border-radius: 9px;
+            border: 1px solid var(--line-2);
+            color: #e6e9ec;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .btn-secondary:hover {
+            background: #1f2327;
+            color: var(--text);
+        }
+
+        /* Painel de câmeras fixadas (desktop) */
+        .pin-panel {
+            flex: none;
+            width: 380px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            border-left: 1px solid var(--line);
+            background: var(--bg);
+        }
+
+        .pin-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .pin-title {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .pin-count {
+            padding: 2px 7px;
+            border-radius: 999px;
+            background: var(--line);
+            color: #c9cdd2;
+            font-family: var(--mono);
+            font-size: 11px;
+        }
+
+        .pin-cols {
+            display: grid;
+            place-items: center;
+            width: 26px;
+            height: 26px;
+            margin-left: auto;
+            border: 0;
+            border-radius: 7px;
+            background: transparent;
+            color: #9ea4ab;
+            cursor: pointer;
+        }
+
+        .pin-cols:hover,
+        .pin-cols[aria-pressed="true"] {
+            background: var(--line);
+            color: #f0f2f4;
+        }
+
+        .pin-clear {
+            border: 0;
+            background: transparent;
+            color: #9ea4ab;
             font-size: 12px;
             cursor: pointer;
         }
 
-        .camera-dock-body {
+        .pin-clear:hover {
+            color: #f0f2f4;
+        }
+
+        .pin-list {
             flex: 1;
-            min-height: 160px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            grid-auto-rows: max-content;
+            align-content: start;
+            gap: 12px;
+            padding: 12px;
+        }
+
+        .pin-list.cols-2 {
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        }
+
+        .pin-card {
+            display: flex;
+            flex-direction: column;
+            border-radius: 12px;
             overflow: hidden;
+            background: var(--surface);
+            border: 1px solid var(--line);
         }
 
-        .camera-dock-body .newTabOpenBtn {
-            display: none !important;
+        .pin-card.is-flash {
+            animation: pinFlash 1.2s ease-out;
         }
 
-        .camera-popup {
+        @keyframes pinFlash {
+            from { border-color: var(--live); box-shadow: 0 0 0 2px rgba(79, 209, 139, 0.45); }
+            to { border-color: var(--line); box-shadow: 0 0 0 2px rgba(79, 209, 139, 0); }
+        }
+
+        .pin-card .feed {
+            flex: none;
+            border-radius: 0;
+        }
+
+        .pin-card .feed-badge {
+            top: 8px;
+            left: 8px;
+            gap: 5px;
+            padding: 3px 7px;
+            border-radius: 5px;
+            font-size: 10px;
+        }
+
+        .pin-card .feed-note {
+            display: none;
+        }
+
+        /* Em 2 colunas o feed tem ~95px de altura: erro compacto */
+        .pin-list.cols-2 .feed-error {
+            gap: 4px;
+            padding: 26px 8px 6px;
+        }
+
+        .pin-list.cols-2 .feed-error-msg {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            font-size: 11px;
+            line-height: 1.25;
+        }
+
+        .pin-list.cols-2 .feed-error-hint {
+            display: none;
+        }
+
+        .pin-list.cols-2 .feed-error-actions {
+            margin-top: 0;
+        }
+
+        .pin-list.cols-2 .feed-error-actions a {
+            display: none;
+        }
+
+        .pin-list.cols-2 .btn-small {
+            height: 26px;
+            padding: 0 8px;
+            font-size: 11px;
+        }
+
+        .pin-foot {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 10px 10px 12px;
+        }
+
+        .pin-name {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: inherit;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .pin-name-t {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .pin-name:hover .pin-name-t {
+            color: var(--link-hover);
+        }
+
+        .pin-meta {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--muted-2);
+        }
+
+        .pin-x {
+            flex: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            border: 0;
+            background: var(--line);
+            color: #c9cdd2;
+            cursor: pointer;
+        }
+
+        .pin-empty {
+            grid-column: 1 / -1;
+            padding: 28px 16px;
+            border: 1px dashed var(--line-2);
+            border-radius: 12px;
+            color: #9ea4ab;
+            font-size: 13px;
+            line-height: 1.5;
             text-align: center;
-            width: 600px;
-            max-width: 86vw;
+            text-wrap: pretty;
         }
 
-        .camera-content {
-            padding: 0 10px;
+        /* Painel da câmera no mobile (tela dividida). A altura segue o conteúdo
+           (vídeo em 16:9), com teto para celulares baixos/deitados. */
+        .m-panel {
+            position: relative;
+            z-index: 1000;
+            flex: none;
+            max-height: 60vh;
+            max-height: 60dvh;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: -14px;
+            padding: 14px 14px 16px;
+            border-top: 1px solid #30353b;
+            border-radius: 18px 18px 0 0;
+            background: var(--surface-2);
+            box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45);
         }
 
-        .camera-popup h3 {
-            margin-bottom: 5px;
-            color: #333;
+        .m-head {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .m-title {
+            font-weight: 600;
             font-size: 16px;
+            line-height: 1.3;
+            text-wrap: pretty;
         }
 
-        .camera-popup iframe {
-            width: 1940px;
-            max-width: 1940px;
-            height: 1080px;
-            min-height: 550px;
-            /* zoom: 0.4; */
-            transform: scale(0.29);
-            transform-origin: 0 0;
-            margin: 8px;
+        .m-actions {
+            flex: none;
+            display: flex;
+            gap: 8px;
         }
 
-        .leaflet-popup-content {
-            margin: 8px;
-            min-width: 260px;
-            max-width: 90vw;
-            overflow: hidden;
+        .m-close,
+        .m-open {
+            flex: none;
+            display: grid;
+            place-items: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: 0;
+            background: var(--line);
+            color: #e0e3e6;
+            font-size: 20px;
+            cursor: pointer;
         }
 
-        .leaflet-popup-content-wrapper {
+        /* "Abrir em tela cheia": ação principal, em verde */
+        .m-open {
+            background: rgba(79, 209, 139, 0.14);
+            color: #a6e6c0;
+        }
+
+        .m-open:hover {
+            color: #d4f5e2;
+        }
+
+        .m-open .ic {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Vídeo em 16:9 (sem tarjas); encolhe se o painel bater no teto */
+        .m-feed {
+            flex: 0 1 auto;
+            min-height: 0;
             border-radius: 12px;
         }
 
-        /* Ícone customizado para câmera */
-        .camera-icon {
-            background: #1f54b8;
-            border: 3px solid white;
-            border-radius: 50%;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        .m-hint {
+            flex: none;
+            padding: 14px 16px;
+            border-top: 1px solid var(--line);
+            background: var(--surface-2);
+            color: var(--muted);
+            font-size: 13px;
+            text-align: center;
         }
-
-        .camera-icon.camera-icon--online {
-            background: #2e9e3f;
-        }
-
-        .camera-icon.camera-icon--offline {
-            background: #8a8f98;
-            opacity: 0.85;
-        }
-
-        .camera-icon.camera-icon--selected {
-            background: #d32f2f;
-            opacity: 1;
-        }
-
-        /* Legenda de status no canto do mapa */
-        .status-legend {
-            position: absolute;
-            bottom: 18px;
-            left: 10px;
-            z-index: 1000;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 8px;
-            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
-            padding: 8px 10px;
-            font-size: 12px;
-            color: #333;
-            line-height: 1.6;
-        }
-
-        .status-legend .dot {
-            display: inline-block;
-            width: 11px;
-            height: 11px;
-            border-radius: 50%;
-            border: 2px solid white;
-            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
-            margin-right: 6px;
-            vertical-align: -1px;
-        }
-
-        .status-legend .dot.on { background: #2e9e3f; }
-        .status-legend .dot.off { background: #8a8f98; }
-        .status-legend .dot.unk { background: #1f54b8; }
 
         /* Banner global quando o servidor de vídeo do COR está fora do ar */
         .server-banner {
@@ -308,13 +1196,13 @@
             left: 0;
             right: 0;
             z-index: 1500;
-            background: #b71c1c;
-            color: #fff;
             padding: 11px 44px;
-            font-size: 14px;
+            background: #5c1a1a;
+            border-bottom: 1px solid #7a2a2a;
+            color: #ffe4e0;
+            font-size: 13px;
             line-height: 1.35;
             text-align: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
         }
 
         .server-banner button.close {
@@ -322,224 +1210,110 @@
             right: 8px;
             top: 50%;
             transform: translateY(-50%);
-            background: none;
+            padding: 4px 8px;
             border: none;
-            color: #fff;
+            background: none;
+            color: #ffe4e0;
             font-size: 20px;
             line-height: 1;
             cursor: pointer;
-            padding: 4px 8px;
         }
 
-        @media (max-width: 480px) {
-            .server-banner { font-size: 12px; padding: 9px 40px; }
-        }
-
-        @media (max-width: 480px) {
-            .status-legend { font-size: 11px; padding: 6px 8px; bottom: 12px; }
-        }
-
-        /* Media Queries para Mobile */
-        @media (max-width: 768px) {
-            header {
-                padding: 10px 15px;
-            }
-
-            header h1 {
-                font-size: 18px;
-            }
-
-            header .info {
-                font-size: 12px;
-            }
-
-            header .github-link span {
-                display: none;
-            }
-
-            header .github-link {
-                padding: 6px;
-            }
-
-            .bairro-selector {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 6px;
-                padding: 5px 5px;
-            }
-
-            .bairro-selector label {
-                font-size: 12px;
-            }
-
-            .bairro-selector select {
-                max-width: 100%;
-                font-size: 13px;
-            }
-
-            .camera-content {
-                padding: 0 5px;
-            }
-
-            .camera-popup {
-                width: auto;
-                max-width: 92vw;
-            }
-
-            .camera-popup h3 {
-                font-size: 14px;
-            }
-
-            .camera-popup iframe {
-                width: 1950px;
-                max-width: 1950px;
-                height: 1120px;
-                min-height: 550px;
-                /* zoom: 0.4; */
-                transform: scale(0.14);
-                transform-origin: 0 0;
-                margin: 8px;
-            }
-
-            .leaflet-popup-content {
-                margin: 8px;
-                min-width: 260px;
-                max-width: 90vw;
-            }
-
-            .camera-dock {
-                height: 45vh;
-            }
-
-            .camera-dock .camera-popup {
-                min-width: unset;
-                max-width: 100%;
-                height: 100%;
-            }
-
-            .camera-dock .camera-popup iframe {
-                width: 1950px;
-                max-width: 1950px;
-                height: 1120px;
-                min-height: 550px;
-                transform: scale(0.215);
-                transform-origin: 0 0;
-                margin: 8px;
+        @media (min-width: 760px) {
+            .m-panel,
+            .m-hint {
+                display: none !important;
             }
         }
 
-        @media (max-width: 480px) {
-            header {
-                padding: 8px 12px;
-                flex-direction: row;
-                align-items: center;
-                gap: 4px;
+        @media (max-width: 759px) {
+            .status-pills,
+            .github-link,
+            .pin-panel {
+                display: none !important;
             }
 
-            header h1 {
+            /* Logo e busca na mesma linha */
+            .rc-header {
+                flex-wrap: nowrap;
+            }
+
+            .brand {
+                flex: none;
+            }
+
+            /* position: static -> a lista de resultados se ancora no header (largura toda) */
+            .search {
+                position: static;
+                flex: 1 1 auto;
+                min-width: 0;
+                max-width: none;
+                margin-left: 0;
+            }
+
+            /* 16px evita o zoom automático do iOS ao focar o campo */
+            .search-box input {
                 font-size: 16px;
             }
 
-            header .info {
-                font-size: 11px;
+            .kbd {
+                display: none;
             }
 
-            .camera-popup {
-                min-width: 360px;
-                max-height: 260px;
-                overflow: hidden;
+            .search-dropdown {
+                top: calc(100% - 6px);
+                left: 8px;
+                right: 8px;
             }
 
-            .camera-popup h3 {
+            /* Chips numa linha só, com rolagem horizontal se não couberem */
+            .filter-chips {
+                left: 0;
+                right: 0;
+                top: 6px;
+                max-width: none;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding: 4px 12px 10px; /* folga p/ a sombra e o alvo de toque */
+                scrollbar-width: none;
+                touch-action: pan-x;
+            }
+
+            .filter-chips::-webkit-scrollbar {
+                display: none;
+            }
+
+            .chip {
+                flex: none;
+            }
+
+            /* Resultados da busca: bairro embaixo do nome, que fica com a largura toda */
+            .sd-text {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 2px;
+            }
+
+            .sd-name {
+                flex: none;
+            }
+
+            /* Alvo de toque maior que o chip, sem sobrepor o vizinho */
+            .chip::after {
+                content: '';
+                position: absolute;
+                inset: -3px;
+            }
+
+            /* Controles do mapa acima da borda que o painel sobrepõe */
+            body.has-selection .leaflet-bottom {
+                bottom: 14px;
+            }
+
+            .server-banner {
                 font-size: 12px;
-                margin-bottom: 5px;
+                padding: 9px 40px;
             }
-
-            .camera-content {
-                padding: 0px;
-            }
-
-            .camera-popup iframe {
-                /* max-width: 880px; */
-                min-height: 420px;
-                transform: scale(0.17);
-                transform-origin: 0 0;
-                height: 100vw;
-                width: 2000px;
-                height: 1110px;
-                margin: 8px;
-            }
-
-            .leaflet-popup-content {
-                margin: 8px;
-                min-width: 260px;
-                max-width: 90vw;
-            }
-
-            .camera-icon {
-                transform: scale(0.8);
-            }
-        }
-
-        .loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 24px;
-            color: #333;
-            z-index: 1000;
-        }
-
-        #loading-bar-parent {
-            width: 100%;
-            position: relative;
-            margin-bottom: -5px;
-        }
-
-        .loading-bar {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 3px;
-            /* altura igual ao do YouTube */
-            width: 0;
-            background: #3a7bf3;
-            /* cor da barrinha, estilo YouTube */
-            z-index: 9999;
-            transition: width 0.2s ease-out;
-        }
-
-        /* Player de vídeo WebRTC (substitui o antigo iframe) */
-        .cam-video-wrap {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 16 / 9;
-            background: #000;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-
-        .cam-video {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            background: #000;
-        }
-
-        .cam-status {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #fff;
-            font-size: 14px;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 8px 14px;
-            border-radius: 8px;
-            pointer-events: none;
         }
     </style>
 </head>
@@ -549,56 +1323,119 @@
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MP4339CX" height="0" width="0"
             style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
-    <header>
-        <div class="vbox">
-            <h1>
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="white">
-                    <path
-                        d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" />
-                </svg>
-                RioCameras.com
-            </h1>
-            <div class="info" id="camera-count">Carregando...</div>
+    <header class="rc-header">
+        <div class="brand">
+            <div class="brand-name">RioCameras.com</div>
+            <div class="brand-count" id="camera-count">Carregando…</div>
         </div>
-        <a href="https://github.com/rbravo/riocameras" target="_blank" class="github-link" title="Ver no GitHub">
-            <svg viewBox="0 0 16 16" fill="currentColor">
-                <path
-                    d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
-            </svg>
-            <span>GitHub</span>
-        </a>
+
+        <div class="status-pills" id="status-pills" hidden>
+            <div class="pill pill-live"><span class="live-dot"></span><span id="pill-live"></span></div>
+            <div class="pill pill-off"><span class="off-dot"></span><span id="pill-off"></span></div>
+        </div>
+
+        <div class="search" id="search">
+            <div class="search-box">
+                <span class="search-icon" aria-hidden="true">⌕</span>
+                <input id="search-input" type="search" placeholder="Buscar rua, câmera ou bairro" autocomplete="off"
+                    spellcheck="false" aria-label="Buscar rua, câmera ou bairro">
+                <span class="kbd" aria-hidden="true">/</span>
+            </div>
+            <div class="search-dropdown" id="search-dropdown" hidden></div>
+        </div>
+
+        <a href="https://github.com/rbravo/riocameras" target="_blank" rel="noopener" class="github-link">GitHub</a>
     </header>
 
-    <div class="bairro-selector">
-        <select id="bairro-select">
-            <option value="">📍 Centralizar em um bairro:</option>
-        </select>
-    </div>
-
-    <div id="loading" class="loading">Carregando câmeras...</div>
-    <div id="map"></div>
-
-    <div id="camera-dock" class="camera-dock" aria-hidden="true">
-        <div class="camera-dock-header">
-            <div id="camera-dock-title" class="camera-dock-title"></div>
-            <button id="camera-dock-close" class="camera-dock-close" type="button">✕</button>
+    <div class="rc-body">
+        <div class="map-wrap" id="map-wrap">
+            <div id="map"></div>
+            <div class="filter-chips" id="filter-chips"></div>
+            <div class="cam-popup" id="cam-popup" hidden></div>
+            <div id="loading" class="loading" role="status" aria-live="polite">
+                <div class="loading-card">
+                    <div class="loading-spinner" aria-hidden="true"></div>
+                    <div class="loading-error-icon" aria-hidden="true">!</div>
+                    <div class="loading-text">
+                        <div class="loading-title" id="loading-title">Carregando câmeras</div>
+                        <div class="loading-step" id="loading-step">Buscando a lista de câmeras…</div>
+                    </div>
+                    <button type="button" class="btn-small loading-retry" id="loading-retry">Tentar novamente</button>
+                </div>
+            </div>
         </div>
-        <div id="camera-dock-body" class="camera-dock-body"></div>
+
+        <!-- Câmeras fixadas (somente desktop) -->
+        <aside class="pin-panel" id="pin-panel">
+            <div class="pin-header">
+                <div class="pin-title">Fixadas</div>
+                <div class="pin-count" id="pin-count">0</div>
+                <button type="button" class="pin-cols" id="pin-cols" aria-pressed="false" title="Mostrar em 2 colunas">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
+                        <rect x="1" y="1" width="5" height="5" rx="1" />
+                        <rect x="8" y="1" width="5" height="5" rx="1" />
+                        <rect x="1" y="8" width="5" height="5" rx="1" />
+                        <rect x="8" y="8" width="5" height="5" rx="1" />
+                    </svg>
+                </button>
+                <button type="button" class="pin-clear" id="pin-clear">Limpar</button>
+            </div>
+            <div class="pin-list" id="pin-list">
+                <div class="pin-empty" id="pin-empty">Clique numa câmera no mapa e use “Fixar” para acompanhá-la aqui.</div>
+            </div>
+        </aside>
     </div>
+
+    <!-- Câmera selecionada no mobile (tela dividida) -->
+    <section class="m-panel" id="m-panel" hidden></section>
+    <div class="m-hint" id="m-hint" hidden>Toque numa câmera no mapa para assistir</div>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
     <script>
-        // Objeto para armazenar os timeouts de cada câmera individualmente
-        const cameraTimeouts = {};
+        // ============================================================
+        //  Utilidades
+        // ============================================================
+        const MOBILE_MQ = window.matchMedia('(max-width: 759px)');
+        const isMobileUi = () => MOBILE_MQ.matches;
 
-        let selectedMarker = null;
-        let selectedCameraId = null;
+        const fmt = (n) => n.toLocaleString('pt-BR');
+        const esc = (s) => String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+        // Busca sem acento e sem diferenciar maiúsculas ("marco" acha "MARÇO")
+        const norm = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
-        function isMobileUi() {
-            return window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+        // localStorage pode estar bloqueado (aba anônima etc.): falha em silêncio
+        const storage = {
+            get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+            set(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
+        };
+
+        // Ícones SVG de traço (estilo em .ic)
+        const ICON = {
+            check: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>',
+            external: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>',
+            expand: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="m21 3-7 7"/><path d="m3 21 7-7"/></svg>'
+        };
+
+        // Cores dos marcadores e legendas
+        const COLOR ={ online: '#4fd18b', offline: '#7b8088', unknown: '#f2c94c', brt: '#5a95e6', bg: '#0f1113' };
+
+        // Cor do ponto: fora do ar = cinza e não verificada = amarelo (qualquer
+        // tipo); no ar, BRT = azul e as demais = verde.
+        function markerColor(entry) {
+            if (entry.status === 'online') return entry.cam.brt ? COLOR.brt : COLOR.online;
+            return COLOR[entry.status];
         }
+
+        const mapWrap = document.getElementById('map-wrap');
+        const popupEl = document.getElementById('cam-popup');
+        const mPanel = document.getElementById('m-panel');
+        const mHint = document.getElementById('m-hint');
+
+        // Objeto para armazenar os timeouts de cada player individualmente
+        const cameraTimeouts = {};
 
         // Banner global para quando o servidor de vídeo do COR está inacessível
         // (ex.: certificado TLS expirado, servidor fora do ar). Mostra uma vez.
@@ -613,102 +1450,38 @@
                 '(problema no servidor de vídeo da prefeitura, não no site). Tente novamente mais tarde.' +
                 '<button class="close" title="Fechar" aria-label="Fechar">×</button>';
             bar.querySelector('.close').addEventListener('click', () => bar.remove());
-            const mapEl = document.getElementById('map');
-            (mapEl || document.body).appendChild(bar);
+            mapWrap.appendChild(bar);
         }
 
-        // Testa se o servidor de vídeo responde; se não, mostra o banner.
-        function probeStreamServer() {
+        // Testa se o servidor de vídeo responde; se não, mostra o banner. Tenta de
+        // novo antes (rede de celular às vezes falha só na primeira conexão).
+        function probeStreamServer(retries = 1) {
             const ctrl = new AbortController();
             const t = setTimeout(() => ctrl.abort(), 8000);
             fetch(STREAM_ORIGIN + '/', { mode: 'no-cors', cache: 'no-store', signal: ctrl.signal })
                 .then(() => clearTimeout(t))
-                .catch(() => { clearTimeout(t); showServerDownBanner(); });
+                .catch(() => {
+                    clearTimeout(t);
+                    if (retries > 0) setTimeout(() => probeStreamServer(retries - 1), 3000);
+                    else showServerDownBanner();
+                });
         }
 
-        function setSelectedMarker(marker) {
-            if (selectedMarker && selectedMarker !== marker) {
-                selectedMarker.setIcon(selectedMarker._baseIcon || cameraIcon);
-            }
-            selectedMarker = marker;
-            if (selectedMarker) {
-                selectedMarker.setIcon(cameraIconSelected);
-            }
-        }
-
-        function clearSelectedMarker() {
-            if (selectedMarker) {
-                selectedMarker.setIcon(selectedMarker._baseIcon || cameraIcon);
-            }
-            selectedMarker = null;
-        }
-
-        function openCameraDock(titleText, cameraId) {
-            const dock = document.getElementById('camera-dock');
-            const dockTitle = document.getElementById('camera-dock-title');
-            const dockBody = document.getElementById('camera-dock-body');
-
-            if (!dock || !dockTitle || !dockBody) return;
-
-            // Trocou de câmera: encerra o stream anterior antes de abrir o novo
-            if (selectedCameraId != null && selectedCameraId !== cameraId) {
-                clearCameraTimeouts(selectedCameraId);
-                stopPlayer(selectedCameraId);
-            }
-
-            selectedCameraId = cameraId;
-            dockTitle.textContent = titleText;
-
-            dockBody.innerHTML = `
-                <div class="camera-popup">
-                    <span style="position: absolute;bottom: 10px;left: 0;right: 0;color: #bbb;font-size: 9px;z-index: 1001;">
-                        Algumas câmeras podem demorar até 30 segundos para carregar
-                    </span>
-                    <div id="camera-content-${cameraId}" class="camera-content">
-                        <p>Carregando câmera...</p>
-                    </div>
-                </div>
-            `;
-
-            dock.classList.add('is-open');
-            dock.setAttribute('aria-hidden', 'false');
-            // Leaflet precisa recalcular o layout quando a altura muda
-            setTimeout(() => map.invalidateSize(), 50);
-        }
-
-        function closeCameraDock() {
-            const dock = document.getElementById('camera-dock');
-            const dockBody = document.getElementById('camera-dock-body');
-            if (!dock || !dockBody) return;
-
-            if (selectedCameraId != null) {
-                clearCameraTimeouts(selectedCameraId);
-                stopPlayer(selectedCameraId);
-            }
-
-            dock.classList.remove('is-open');
-            dock.setAttribute('aria-hidden', 'true');
-            dockBody.innerHTML = '';
-            selectedCameraId = null;
-            clearSelectedMarker();
-            setTimeout(() => map.invalidateSize(), 50);
-        }
-
-        function startLoadingBar(cameraId) {
-            const bar = document.getElementById(`loading-bar-${cameraId}`);
+        function startLoadingBar(key) {
+            const bar = document.getElementById(`loading-bar-${key}`);
             if (!bar) return;
-            
-            // Define que em 6s ela deve chegar a 100%
+
+            // Chega a 100% em 20s (só um indicativo de progresso)
             bar.style.transition = "width 20s linear";
             requestAnimationFrame(() => {
                 bar.style.width = "100%";
             });
         }
-        
-        function finishLoadingBar(cameraId) {
-            const bar = document.getElementById(`loading-bar-${cameraId}`);
+
+        function finishLoadingBar(key) {
+            const bar = document.getElementById(`loading-bar-${key}`);
             if (!bar) return;
-            
+
             bar.style.transition = "all 0.3s ease-out";
             bar.style.width = "100%";
             // depois some suavemente
@@ -720,86 +1493,116 @@
             }, 800);
         }
 
-        function clearCameraTimeouts(cameraId) {
-            if (cameraTimeouts[cameraId]) {
-                if (cameraTimeouts[cameraId].timeout1) {
-                    clearTimeout(cameraTimeouts[cameraId].timeout1);
+        function clearCameraTimeouts(key) {
+            if (cameraTimeouts[key]) {
+                if (cameraTimeouts[key].timeout1) {
+                    clearTimeout(cameraTimeouts[key].timeout1);
                 }
-                if (cameraTimeouts[cameraId].timeout2) {
-                    clearTimeout(cameraTimeouts[cameraId].timeout2);
+                if (cameraTimeouts[key].timeout2) {
+                    clearTimeout(cameraTimeouts[key].timeout2);
                 }
-                delete cameraTimeouts[cameraId];
+                delete cameraTimeouts[key];
             }
         }
 
-        // Inicializar o mapa centrado no Rio de Janeiro
-        const map = L.map('map').setView([-22.9997404, -43.3659929], 14);
+        // ============================================================
+        //  Mapa (Leaflet, tema escuro, marcadores em canvas)
+        // ============================================================
+        const map = L.map('map', {
+            zoomControl: false,
+            preferCanvas: true,
+            minZoom: 10, // a cidade inteira; menos níveis para o cluster calcular
+            maxZoom: 16, // último nível dos tiles da Esri (acima disso ficariam borrados)
+            // Área de clique um pouco maior que o círculo (no toque precisa de folga)
+            renderer: L.canvas({ padding: 0.5, tolerance: window.matchMedia('(pointer: coarse)').matches ? 10 : 3 })
+        }).setView([-22.9997404, -43.3659929], 14);
 
-        // Adicionar camada de tiles do OpenStreetMap
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            maxZoom: 19
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        // Esri Dark Gray (não precisa de chave). Os tiles vão até o zoom 16.
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors',
+            maxZoom: 16
         }).addTo(map);
 
-        // Ícone customizado para as câmeras
-        const cameraIcon = L.divIcon({
-            className: 'camera-icon',
-            html: '<svg xmlns="http://www.w3.org/2000/svg" style="margin:5px;" width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>',
-            iconSize: [40, 40],
-            iconAnchor: [20, 20],
-            popupAnchor: [0, -20]
-        });
+        // Padrão: 6px com borda escura; selecionado: 10px com borda branca
+        function markerStyle(entry, isSelected) {
+            const fill = { fillColor: markerColor(entry), fillOpacity: entry.status === 'offline' ? 0.8 : 0.95 };
+            if (isSelected) return { radius: 10, color: '#ffffff', weight: 3, ...fill };
+            return { radius: 6, color: COLOR.bg, weight: 1, ...fill };
+        }
 
-        const cameraIconSelected = L.divIcon({
-            className: 'camera-icon camera-icon--selected',
-            html: '<svg xmlns="http://www.w3.org/2000/svg" style="margin:5px;" width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>',
-            iconSize: [40, 40],
-            iconAnchor: [20, 20],
-            popupAnchor: [0, -20]
-        });
+        // Agrupa câmeras muito próximas. O raio (px) diminui com o zoom: de longe
+        // limpa o mapa; de perto só junta pontos que se encostam. No zoom máximo o
+        // clique no cluster abre as câmeras em leque (ex.: várias no mesmo poste).
+        // Pernas do leque num pane próprio, abaixo dos pontos e sem capturar
+        // cliques (a ponta da perna fica bem em cima da câmera)
+        map.createPane('spiderLegs');
+        map.getPane('spiderLegs').style.zIndex = 390;
+        map.getPane('spiderLegs').style.pointerEvents = 'none';
 
-        // Ícones por status (preenchidos a partir do status.json)
-        const makeCamIcon = (extraClass) => L.divIcon({
-            className: 'camera-icon' + (extraClass ? ' ' + extraClass : ''),
-            html: '<svg xmlns="http://www.w3.org/2000/svg" style="margin:5px;" width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>',
-            iconSize: [40, 40],
-            iconAnchor: [20, 20],
-            popupAnchor: [0, -20]
-        });
-        const cameraIconOnline = makeCamIcon('camera-icon--online');
-        const cameraIconOffline = makeCamIcon('camera-icon--offline');
+        const clusters = L.markerClusterGroup({
+            // No 16 (zoom máximo) só junta pontos que se sobrepõem de fato
+            maxClusterRadius: (zoom) => zoom >= 16 ? 16 : zoom === 15 ? 22 : zoom === 14 ? 28 : zoom >= 12 ? 36 : 56,
+            showCoverageOnHover: false,
+            spiderfyDistanceMultiplier: 1.3,
+            // As pernas são animadas via SVG (o resto do mapa é canvas)
+            spiderLegPolylineOptions: {
+                renderer: L.svg({ pane: 'spiderLegs' }), pane: 'spiderLegs', interactive: false,
+                weight: 1.5, color: '#a4aab2', opacity: 0.6
+            },
+            iconCreateFunction: clusterIcon
+        }).addTo(map);
+        // No leque a câmera muda de posição: o popup acompanha
+        clusters.on('spiderfied unspiderfied', positionPopup);
 
+        // Contagem no centro; anel com a proporção de cada cor de ponto
+        // (verde, azul do BRT, cinza fora do ar, amarelo não verificada).
+        function clusterIcon(cluster) {
+            const kids = cluster.getAllChildMarkers();
+            const n = kids.length;
+            let live = 0, liveBrt = 0, off = 0;
+            kids.forEach(m => {
+                const e = m.entry;
+                if (e.status === 'online') { if (e.cam.brt) liveBrt++; else live++; }
+                else if (e.status === 'offline') off++;
+            });
+            const a = (live / n) * 100, b = ((live + liveBrt) / n) * 100, c = ((live + liveBrt + off) / n) * 100;
+            const size = n < 10 ? 22 : n < 100 ? 28 : n < 1000 ? 34 : 40;
+            return L.divIcon({
+                className: 'rc-cluster',
+                html: `<div class="cl" style="background:conic-gradient(${COLOR.online} 0 ${a}%, ${COLOR.brt} ${a}% ${b}%, ${COLOR.offline} ${b}% ${c}%, ${COLOR.unknown} ${c}% 100%)"><span>${fmt(n)}</span></div>`,
+                iconSize: [size, size]
+            });
+        }
+
+        // Bairros (busca + bairro aproximado de cada câmera). O build troca o
+        // fetch abaixo pelos dados embutidos de bairros-data.js.
+        let resolveBairros;
+        const bairrosReady = new Promise(resolve => { resolveBairros = resolve; });
         // Buscar dados dos bairros
         fetch('/api/bairros')
             .then(response => response.json())
             .then(bairros => {
-                const select = document.getElementById('bairro-select');
-
-                // Ordenar bairros alfabeticamente
-                bairros.sort((a, b) => a.nome.localeCompare(b.nome));
-
-                // Adicionar opções ao select
-                bairros.forEach(bairro => {
-                    const option = document.createElement('option');
-                    option.value = JSON.stringify({ lat: bairro.latitude, lon: bairro.longitude });
-                    option.textContent = bairro.nome;
-                    select.appendChild(option);
-                });
-
-                // Adicionar evento de mudança
-                select.addEventListener('change', (e) => {
-                    if (e.target.value) {
-                        const { lat, lon } = JSON.parse(e.target.value);
-                        map.setView([lat, lon], 15, {
-                            animate: true,
-                            duration: 1
-                        });
-                    }
-                });
+                resolveBairros(bairros);
             })
             .catch(error => {
                 console.error('Erro ao carregar bairros:', error);
+                resolveBairros([]);
             });
+
+        // O cameras.json não traz bairro: usamos o centro de bairro mais próximo
+        // (aproximação; perto das divisas pode indicar o bairro vizinho).
+        function nearestBairro(lat, lon, list) {
+            let best = null, bestD = Infinity;
+            const k = Math.cos(lat * Math.PI / 180);
+            for (const b of list) {
+                const dy = lat - b.lat, dx = (lon - b.lon) * k;
+                const d = dx * dx + dy * dy;
+                if (d < bestD) { bestD = d; best = b; }
+            }
+            return best ? best.nome : '';
+        }
 
         // ============================================================
         //  Feed de câmeras (COR.Rio) — player WebRTC (WHEP) via proxy
@@ -842,26 +1645,33 @@
         const STREAM_ORIGIN = 'https://appcor.cor-rio.work';
 
         // Status das câmeras (gerado pelo job em .github/workflows/check-cameras.yml).
-        // Marca cada marcador como online (verde) / offline (cinza) / não-checada (azul).
+        // Marca cada câmera como ao vivo (verde) / fora do ar (cinza) / não checada (azul).
         const STATUS_URL = 'status.json';
 
-        const activePlayers = {}; // cameraId -> { pc, sessionId, streamOrigin, heartbeat }
+        // key -> { pc, sessionId, heartbeat, watchdog }. A key é o cameraId no
+        // popup / painel do mobile e "pin-{cameraId}" nas fixadas.
+        const activePlayers = {};
 
-        function stopPlayer(cameraId) {
-            const p = activePlayers[cameraId];
+        // Encerra a sessão no COR via proxy (sem esperar resposta).
+        function stopSession(sessionId) {
+            try {
+                fetch(SIGNAL_BASE + '/stop', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId }), keepalive: true
+                }).catch(() => { });
+            } catch (e) { }
+        }
+
+        function stopPlayer(key) {
+            const p = activePlayers[key];
             if (!p) return;
             // Paramos o heartbeat, zeramos os handlers (p/ fechar sem disparar
             // "conexão perdida") e encerramos a sessão no COR via proxy.
             try { if (p.heartbeat) clearInterval(p.heartbeat); } catch (e) { }
             try { if (p.watchdog) clearTimeout(p.watchdog); } catch (e) { }
             try { if (p.pc) { p.pc.ontrack = null; p.pc.onconnectionstatechange = null; p.pc.close(); } } catch (e) { }
-            try {
-                if (p.sessionId) fetch(SIGNAL_BASE + '/stop', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sessionId: p.sessionId }), keepalive: true
-                }).catch(() => { });
-            } catch (e) { }
-            delete activePlayers[cameraId];
+            if (p.sessionId) stopSession(p.sessionId);
+            delete activePlayers[key];
         }
 
         function waitIceGathering(pc, ms = 3000) {
@@ -897,16 +1707,31 @@
         // precisa deles já na criação, fazemos como o player oficial: a 1ª
         // tentativa (STUN) só descobre os ICE servers e, se vierem, reconecta
         // usando-os (uma vez; iceServers != null impede loop).
-        async function startCameraStream(cam, videoEl, onError, iceServers) {
-            const fail = (msg) => { stopPlayer(cam.cameraId); if (onError) onError(msg); };
+        async function startCameraStream(key, cam, videoEl, onError, iceServers) {
+            const fail = (msg) => { stopPlayer(key); if (onError) onError(msg); };
             let pc, sessionId;
+            // O player pode ser fechado no meio da negociação (popup/painel fechado,
+            // câmera desafixada), e aí o <video> já saiu da página. Nesse caso
+            // desistimos em silêncio, encerrando só o que esta tentativa abriu.
+            const abandoned = () => {
+                if (videoEl.isConnected) return false;
+                const p = activePlayers[key];
+                if (p && p.pc === pc) {
+                    stopPlayer(key);
+                } else {
+                    if (pc) { try { pc.ontrack = null; pc.onconnectionstatechange = null; pc.close(); } catch (e) { } }
+                    if (sessionId) stopSession(sessionId);
+                }
+                return true;
+            };
             try {
                 const sResp = await fetch(SIGNAL_BASE + '/session/start/' + encodeURIComponent(cam.code), {
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
                 });
                 const sData = await sResp.json().catch(() => ({}));
-                if (!sResp.ok) return fail(sData.error || 'Falha ao registrar sessão');
                 sessionId = sData.sessionId;
+                if (abandoned()) return;
+                if (!sResp.ok) return fail(sData.error || 'Falha ao registrar sessão');
                 if (!sessionId) return fail('Sessão de vídeo inválida');
 
                 const defaults = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }];
@@ -926,17 +1751,19 @@
                     }).catch(() => { });
                 }, 20000);
 
-                activePlayers[cam.cameraId] = { pc, sessionId, heartbeat };
+                activePlayers[key] = { pc, sessionId, heartbeat };
 
                 const offer = await pc.createOffer();
                 await pc.setLocalDescription(offer);
                 await waitIceGathering(pc);
+                if (abandoned()) return;
 
                 const wResp = await fetch(SIGNAL_BASE + '/whep/' + encodeURIComponent(sessionId), {
                     method: 'POST', headers: { 'Content-Type': 'application/sdp' },
                     body: pc.localDescription.sdp
                 });
                 const answerSdp = await wResp.text();
+                if (abandoned()) return;
                 if (!wResp.ok) {
                     let msg = 'Câmera sem sinal ou offline';
                     try { const j = JSON.parse(answerSdp); if (j.error) msg = j.error; } catch (e) { }
@@ -947,28 +1774,31 @@
                 if (!iceServers || !iceServers.length) {
                     const discovered = parseWhepIceServers(wResp.headers.get('Link'));
                     if (discovered.length) {
-                        stopPlayer(cam.cameraId); // handlers já zerados; não dispara erro
-                        return startCameraStream(cam, videoEl, onError, discovered);
+                        stopPlayer(key); // handlers já zerados; não dispara erro
+                        return startCameraStream(key, cam, videoEl, onError, discovered);
                     }
                 }
 
                 await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
+                if (abandoned()) return;
 
                 // Watchdog: a negociação pode dar OK mas a câmera estar offline
                 // (conecta e nunca manda vídeo). Se não chegar frame em ~20s,
                 // avisa que está sem sinal em vez de ficar em "Conectando…".
                 let gotFrames = false;
                 const watchdog = setTimeout(() => {
+                    if (abandoned()) return;
                     if (!gotFrames && !(videoEl.videoWidth > 0)) {
                         fail('Câmera offline ou sem sinal no momento');
                     }
                 }, 20000);
-                if (activePlayers[cam.cameraId]) activePlayers[cam.cameraId].watchdog = watchdog;
+                if (activePlayers[key]) activePlayers[key].watchdog = watchdog;
                 videoEl.addEventListener('playing', () => {
                     gotFrames = true;
                     clearTimeout(watchdog);
                 }, { once: true });
             } catch (e) {
+                if (abandoned()) return; // ex.: pc fechado no meio; não é falha do servidor
                 console.error('Erro WHEP:', e);
                 if (pc) { try { pc.ontrack = null; pc.onconnectionstatechange = null; pc.close(); } catch (_) { } }
                 showServerDownBanner(); // erro de rede ao falar com o proxy/servidor de vídeo
@@ -978,11 +1808,17 @@
 
         // Normaliza um item da API nova para o formato usado aqui.
         function normalizeCamera(c) {
+            const nome = c.nome || 'Câmera';
             return {
                 // id = apiId: único campo presente em TODAS as variações da API
                 cameraId: c.apiId || String(c.cameraId || ''),
                 code: c.apiId || c.code,       // "000001" (usado no session/start)
-                nome: c.nome || 'Câmera',
+                nome: nome,
+                // Nome sem os sufixos "- BRT" / "- FIXA" (o tipo já aparece na linha de meta)
+                titulo: nome.replace(/(\s*-\s*(BRT|FIXA)\s*)+$/i, '').trim() || nome,
+                // Câmeras do BRT têm "- BRT" no nome (ex.: "BOSQUE DA BARRA - BRT - FIXA")
+                brt: /-\s*BRT\b/i.test(nome),
+                fixa: /\bFIXA\b/i.test(nome),
                 lat: parseFloat(c.lat),
                 lon: parseFloat(c.lon),
                 // página oficial (abre como aba top-level; não serve p/ iframe).
@@ -991,185 +1827,676 @@
             };
         }
 
+        // "#000123 · Barra da Tijuca · BRT"
+        function metaHtml(cam) {
+            const tipo = cam.brt ? 'BRT' : (cam.fixa ? 'Fixa' : '');
+            return '<div class="meta">' +
+                [`#${cam.cameraId}`, cam.bairro, tipo].filter(Boolean).map(esc).map(s => `<span>${s}</span>`).join('<span>·</span>') +
+                '</div>';
+        }
+
+        function feedBadge(cam) {
+            if (cam.status === 'online') return '<div class="feed-badge"><span class="live-dot"></span>AO VIVO</div>';
+            if (cam.status === 'offline') return '<div class="feed-badge off">FORA DO AR</div>';
+            return '';
+        }
+
+        // Monta o player (video + WHEP) dentro do feed #camera-content-{key}. A key
+        // é o cameraId no popup / painel do mobile e "pin-{cameraId}" nas fixadas,
+        // para os dois poderem tocar a mesma câmera sem conflito de ids nem de sessão.
+        //   isStale:      true quando o conteúdo não deve mais ser mostrado
+        //   showOpenLink: inclui "Abrir em nova aba" na tela de erro (cards fixados)
+        function loadCameraContent(cam, key, { isStale = () => false, showOpenLink = false } = {}) {
+            const feed = document.getElementById(`camera-content-${key}`);
+            if (!feed) return;
+            if (isStale()) return;
+            const badge = feedBadge(cam);
+
+            const showError = (message) => {
+                if (!feed.isConnected) return;
+                if (isStale()) return;
+                // O COR recusa a sessão ("codecs not supported by client") quando o
+                // navegador não decodifica H.265; aí tentar de novo não adianta.
+                const noCodec = /codec/i.test(message);
+                const title = noCodec ? 'Este navegador não consegue reproduzir esta câmera' : message;
+                const hint = noCodec
+                    ? 'Ela transmite em H.265 (HEVC). Tente atualizar o navegador ou usar outro.'
+                    : 'Esta câmera pode estar temporariamente fora do ar.';
+                feed.classList.remove('is-playing');
+                feed.innerHTML = `
+                    ${badge}
+                    <div class="feed-error">
+                        <div class="feed-error-msg">⚠ ${esc(title)}</div>
+                        <div class="feed-error-hint">${hint}</div>
+                        <div class="feed-error-actions">
+                            ${noCodec ? '' : '<button type="button" class="btn-small" data-action="retry">Tentar novamente</button>'}
+                            ${showOpenLink ? `<a class="btn-small" href="${cam.pageUrl}" target="_blank" rel="noopener">Abrir em nova aba ${ICON.external}</a>` : ''}
+                        </div>
+                    </div>
+                `;
+                const retryBtn = feed.querySelector('[data-action="retry"]');
+                if (retryBtn) {
+                    retryBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        loadCameraContent(cam, key, { isStale, showOpenLink });
+                    });
+                }
+            };
+
+            feed.classList.remove('is-playing');
+            feed.innerHTML = `
+                <div class="loading-bar" id="loading-bar-${key}"></div>
+                <video id="cam-video-${key}" autoplay muted playsinline></video>
+                <div class="feed-status">Conectando…</div>
+                ${badge}
+                <div class="feed-note">pode levar até 30s para carregar</div>
+            `;
+
+            const videoEl = document.getElementById(`cam-video-${key}`);
+            if (!videoEl) return;
+            videoEl.onplaying = () => {
+                feed.classList.add('is-playing');
+                finishLoadingBar(key);
+            };
+
+            // barrinha de progresso estilo YouTube
+            clearCameraTimeouts(key);
+            cameraTimeouts[key] = {};
+            cameraTimeouts[key].timeout1 = setTimeout(() => startLoadingBar(key), 150);
+
+            stopPlayer(key); // encerra stream anterior deste player (retry)
+            startCameraStream(key, cam, videoEl, (msg) => {
+                clearCameraTimeouts(key);
+                showError(msg);
+            });
+        }
+
+        // ============================================================
+        //  Câmera selecionada: popup (desktop) ou painel inferior (mobile)
+        // ============================================================
+        const camById = new Map(); // cameraId -> { cam, type, status, marker, key, nameKey }
+        let selected = null;
+
+        function selectCamera(entry, { fly = false } = {}) {
+            closeSearch();
+            if (selected === entry) {
+                if (fly) flyToCamera(entry);
+                return;
+            }
+            deselect();
+            selected = entry;
+            entry.marker.setStyle(markerStyle(entry, true));
+            entry.marker.bringToFront();
+            if (isMobileUi()) openMobilePanel(entry, fly);
+            else openPopup(entry, fly);
+        }
+
+        function flyToCamera(entry) {
+            map.flyTo([entry.cam.lat, entry.cam.lon], Math.max(map.getZoom(), 15), { duration: 0.8 });
+            // Se ao chegar a câmera ainda estiver dentro de um cluster, aproxima
+            // (ou abre o leque) até ela aparecer
+            map.once('moveend', () => {
+                if (selected === entry && clusters.hasLayer(entry.marker) && !map.hasLayer(entry.marker)) {
+                    clusters.zoomToShowLayer(entry.marker);
+                }
+            });
+        }
+
+        // Restaura o marcador e encerra o player da câmera selecionada
+        function deselect() {
+            if (!selected) return;
+            selected.marker.setStyle(markerStyle(selected, false));
+            clearCameraTimeouts(selected.cam.cameraId);
+            stopPlayer(selected.cam.cameraId);
+            selected = null;
+        }
+
+        function closeSelection() {
+            deselect();
+            if (!popupEl.hidden) {
+                popupEl.hidden = true;
+                popupEl.innerHTML = '';
+            }
+            if (!mPanel.hidden) {
+                mPanel.hidden = true;
+                mPanel.innerHTML = '';
+                mHint.hidden = false;
+                document.body.classList.remove('has-selection');
+                map.invalidateSize({ pan: false });
+            }
+        }
+
+        function openPopup(entry, fly) {
+            const { cam } = entry;
+            popupEl.innerHTML = `
+                <div class="cp-head">
+                    <div class="cp-headtext">
+                        ${metaHtml(cam)}
+                        <div class="cp-title">${esc(cam.titulo)}</div>
+                    </div>
+                    <button type="button" class="cp-close" data-action="close" aria-label="Fechar">×</button>
+                </div>
+                <div id="camera-content-${cam.cameraId}" class="feed cp-feed"></div>
+                <div class="cp-actions">
+                    <button type="button" class="btn-primary" data-action="pin"></button>
+                    <a class="btn-secondary" href="${cam.pageUrl}" target="_blank" rel="noopener">Abrir em nova aba ${ICON.external}</a>
+                </div>
+            `;
+            popupEl.querySelector('[data-action="close"]').addEventListener('click', closeSelection);
+            popupEl.querySelector('[data-action="pin"]').addEventListener('click', () => {
+                if (pinned.has(cam.cameraId)) {
+                    unpinCamera(cam.cameraId);
+                } else {
+                    // Fecha o popup antes, para não abrir 2 streams da mesma câmera
+                    closeSelection();
+                    pinCamera(cam);
+                }
+            });
+            popupEl.hidden = false;
+            updatePopupPinLabel();
+            positionPopup();
+            if (fly) flyToCamera(entry);
+            loadCameraContent(cam, cam.cameraId, { isStale: () => selected !== entry });
+        }
+
+        function updatePopupPinLabel() {
+            const btn = selected && !popupEl.hidden ? popupEl.querySelector('[data-action="pin"]') : null;
+            if (btn) btn.innerHTML = pinned.has(selected.cam.cameraId) ? `Fixada ${ICON.check}` : 'Fixar no painel';
+        }
+
+        // Acima do marcador se couber; senão abaixo; senão ao lado. Some enquanto o
+        // marcador estiver fora da área visível do mapa.
+        function positionPopup() {
+            if (!selected || popupEl.hidden) return;
+            const mw = mapWrap.clientWidth, mh = mapWrap.clientHeight;
+            const W = popupEl.offsetWidth, H = popupEl.offsetHeight;
+            // Posição atual do marcador (no leque do cluster ela muda)
+            const p = map.latLngToContainerPoint(selected.marker.getLatLng());
+            popupEl.style.visibility = (p.x < 0 || p.y < 0 || p.x > mw || p.y > mh) ? 'hidden' : '';
+
+            let left = Math.min(Math.max(p.x - W / 2, 12), mw - W - 12);
+            let top;
+            if (p.y - 16 >= H) {
+                top = p.y - 16 - H;
+            } else if (mh - p.y - 16 >= H) {
+                top = p.y + 16;
+            } else {
+                top = Math.max(12, Math.min(p.y - H / 2, mh - H - 12));
+                left = p.x + 20 + W <= mw - 12 ? p.x + 20 : Math.max(12, p.x - 20 - W);
+            }
+            popupEl.style.left = left + 'px';
+            popupEl.style.top = top + 'px';
+        }
+
+        map.on('move zoom resize', positionPopup);
+
+        function openMobilePanel(entry, fly) {
+            const { cam } = entry;
+            mPanel.innerHTML = `
+                <div class="m-head">
+                    <div class="m-headtext">
+                        ${metaHtml(cam)}
+                        <div class="m-title">${esc(cam.titulo)}</div>
+                    </div>
+                    <div class="m-actions">
+                        <a class="m-open" href="${cam.pageUrl}" target="_blank" rel="noopener" title="Abrir em tela cheia" aria-label="Abrir em tela cheia">${ICON.expand}</a>
+                        <button type="button" class="m-close" data-action="close" aria-label="Fechar">×</button>
+                    </div>
+                </div>
+                <div id="camera-content-${cam.cameraId}" class="feed m-feed"></div>
+            `;
+            mPanel.querySelector('[data-action="close"]').addEventListener('click', closeSelection);
+            mPanel.hidden = false;
+            mHint.hidden = true;
+            document.body.classList.add('has-selection');
+            // O mapa encolhe: recalcula e traz a câmera para a área que sobrou
+            // (sempre, pois a altura do painel varia com o tamanho do título)
+            map.invalidateSize({ pan: false });
+            if (fly) flyToCamera(entry);
+            else map.panTo(entry.marker.getLatLng(), { animate: true });
+            loadCameraContent(cam, cam.cameraId, { isStale: () => selected !== entry });
+        }
+
+        // Toque/clique no mapa vazio fecha a busca e a câmera aberta
+        map.on('click', () => {
+            closeSearch();
+            closeSelection();
+        });
+
+        // ============================================================
+        //  Câmeras fixadas (desktop) — salvas no navegador
+        // ============================================================
+        const PINS_KEY = 'riocameras.pinned';
+        const PIN_COLS_KEY = 'riocameras.pinCols';
+        const pinned = new Map(); // cameraId -> cam, na ordem em que foram fixadas
+        const pinList = document.getElementById('pin-list');
+        const pinEmpty = document.getElementById('pin-empty');
+        const pinColsBtn = document.getElementById('pin-cols');
+
+        function pinsChanged() {
+            document.getElementById('pin-count').textContent = pinned.size;
+            pinEmpty.hidden = pinned.size > 0;
+            storage.set(PINS_KEY, JSON.stringify([...pinned.keys()]));
+            updatePopupPinLabel();
+        }
+
+        function pinCamera(cam, { restoring = false } = {}) {
+            let card = document.getElementById(`pin-card-${cam.cameraId}`);
+            if (!card) {
+                const key = 'pin-' + cam.cameraId;
+                card = document.createElement('div');
+                card.className = 'pin-card';
+                card.id = `pin-card-${cam.cameraId}`;
+                card.innerHTML = `
+                    <div id="camera-content-${key}" class="feed"></div>
+                    <div class="pin-foot">
+                        <button type="button" class="pin-name" title="Ver no mapa">
+                            <span class="pin-name-t">${esc(cam.titulo)}</span>
+                            <span class="pin-meta">${esc([`#${cam.cameraId}`, cam.bairro].filter(Boolean).join(' · '))}</span>
+                        </button>
+                        <button type="button" class="pin-x" title="Desafixar" aria-label="Desafixar">×</button>
+                    </div>
+                `;
+                card.querySelector('.pin-name').addEventListener('click', () => {
+                    const entry = camById.get(cam.cameraId);
+                    if (entry) selectCamera(entry, { fly: true });
+                });
+                card.querySelector('.pin-x').addEventListener('click', () => unpinCamera(cam.cameraId));
+                pinList.appendChild(card);
+                pinned.set(cam.cameraId, cam);
+                pinsChanged();
+                // No mobile o painel não aparece: o player só sobe no desktop
+                if (!isMobileUi()) loadCameraContent(cam, key, { showOpenLink: true });
+            }
+            if (restoring) return;
+
+            // Mostra (e destaca) o card, inclusive se a câmera já estava fixada
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            card.classList.remove('is-flash');
+            void card.offsetWidth; // reinicia a animação
+            card.classList.add('is-flash');
+        }
+
+        function unpinCamera(cameraId) {
+            const key = 'pin-' + cameraId;
+            clearCameraTimeouts(key);
+            stopPlayer(key);
+            const card = document.getElementById(`pin-card-${cameraId}`);
+            if (card) card.remove();
+            pinned.delete(cameraId);
+            pinsChanged();
+        }
+
+        // Liga os players das fixadas no desktop e desliga no mobile
+        function syncPinPlayers() {
+            pinned.forEach((cam, cameraId) => {
+                const key = 'pin-' + cameraId;
+                if (isMobileUi()) {
+                    clearCameraTimeouts(key);
+                    stopPlayer(key);
+                    const feed = document.getElementById(`camera-content-${key}`);
+                    if (feed) { feed.classList.remove('is-playing'); feed.innerHTML = ''; }
+                } else if (!activePlayers[key]) {
+                    loadCameraContent(cam, key, { showOpenLink: true });
+                }
+            });
+        }
+
+        function setPinCols(n) {
+            pinList.classList.toggle('cols-2', n === 2);
+            pinColsBtn.setAttribute('aria-pressed', String(n === 2));
+            pinColsBtn.title = n === 2 ? 'Mostrar em 1 coluna' : 'Mostrar em 2 colunas';
+            storage.set(PIN_COLS_KEY, String(n));
+        }
+
+        setPinCols(storage.get(PIN_COLS_KEY) === '2' ? 2 : 1);
+        pinColsBtn.addEventListener('click', () => setPinCols(pinList.classList.contains('cols-2') ? 1 : 2));
+        document.getElementById('pin-clear').addEventListener('click', () => {
+            [...pinned.keys()].forEach(unpinCamera);
+        });
+
+        // ============================================================
+        //  Busca (ruas/câmeras por nome ou ID, e bairros)
+        // ============================================================
+        const searchEl = document.getElementById('search');
+        const searchInput = document.getElementById('search-input');
+        const searchDropdown = document.getElementById('search-dropdown');
+        let bairroIndex = []; // { nome, lat, lon, key }
+        let searchFirst = null; // ação do Enter (primeiro resultado)
+
+        function renderSearch() {
+            const raw = searchInput.value.trim();
+            const q = norm(raw);
+            const tokens = q.split(/\s+/).filter(Boolean);
+            const matches = (key) => tokens.every(t => key.includes(t));
+
+            // Sem busca, lista todos os bairros como atalho
+            const bairros = tokens.length ? bairroIndex.filter(b => matches(b.key)).slice(0, 6) : bairroIndex;
+
+            let cams = [];
+            if (tokens.length) {
+                const exactId = /^\d+$/.test(q) ? q.padStart(6, '0') : null;
+                for (const entry of camById.values()) {
+                    if (!matches(entry.key)) continue;
+                    // ID exato primeiro, depois nomes que começam com a busca
+                    const rank = entry.cam.cameraId === exactId ? 0 : (entry.nameKey.startsWith(q) ? 1 : 2);
+                    cams.push({ entry, rank });
+                }
+                cams = cams.sort((a, b) => a.rank - b.rank).slice(0, 6).map(x => x.entry);
+            }
+
+            let html = '';
+            if (bairros.length) {
+                html += '<div class="sd-label">Bairros</div><div class="sd-chips">' +
+                    bairros.map(b => `<button type="button" class="sd-chip" data-bairro="${b.idx}">${esc(b.nome)}</button>`).join('') +
+                    '</div>';
+            }
+            if (cams.length) {
+                // Muitas câmeras têm o mesmo nome: nesses casos mostra o ID para diferenciar
+                const sameName = {};
+                cams.forEach(e => { sameName[e.cam.titulo] = (sameName[e.cam.titulo] || 0) + 1; });
+                html += '<div class="sd-label">Câmeras</div><div class="sd-rows">' +
+                    cams.map(e => `
+                        <button type="button" class="sd-row" data-cam="${esc(e.cam.cameraId)}">
+                            <span class="sd-dot" style="background:${markerColor(e)}"></span>
+                            <span class="sd-text">
+                                <span class="sd-name">${esc(e.cam.titulo)}</span>
+                                <span class="sd-bairro">${esc([sameName[e.cam.titulo] > 1 ? `#${e.cam.cameraId}` : '', e.cam.bairro].filter(Boolean).join(' · '))}</span>
+                            </span>
+                        </button>`).join('') +
+                    '</div>';
+            }
+            if (!html) html = `<div class="sd-empty">Nada encontrado para “${esc(raw)}”</div>`;
+            searchDropdown.innerHTML = html;
+            searchDropdown.hidden = false;
+
+            searchFirst = cams.length ? () => pickCamera(cams[0])
+                : (tokens.length && bairros.length ? () => pickBairro(bairros[0]) : null);
+        }
+
+        function closeSearch() {
+            searchDropdown.hidden = true;
+        }
+
+        // No celular a caixa fica ao lado do logo: placeholder mais curto
+        function updateSearchPlaceholder() {
+            searchInput.placeholder = isMobileUi() ? 'Buscar rua ou bairro' : 'Buscar rua, câmera ou bairro';
+        }
+        updateSearchPlaceholder();
+
+        function clearSearch() {
+            searchInput.value = '';
+            closeSearch();
+            searchInput.blur();
+        }
+
+        function pickCamera(entry) {
+            clearSearch();
+            selectCamera(entry, { fly: true });
+        }
+
+        function pickBairro(b) {
+            clearSearch();
+            map.flyTo([b.lat, b.lon], 14, { duration: 0.8 });
+        }
+
+        searchInput.addEventListener('focus', renderSearch);
+        searchInput.addEventListener('input', renderSearch);
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && searchFirst) {
+                e.preventDefault();
+                searchFirst();
+            }
+        });
+        searchDropdown.addEventListener('click', (e) => {
+            const camBtn = e.target.closest('[data-cam]');
+            const bairroBtn = e.target.closest('[data-bairro]');
+            if (camBtn) {
+                const entry = camById.get(camBtn.dataset.cam);
+                if (entry) pickCamera(entry);
+            } else if (bairroBtn) {
+                pickBairro(bairroIndex[+bairroBtn.dataset.bairro]);
+            }
+        });
+        document.addEventListener('pointerdown', (e) => {
+            if (!searchEl.contains(e.target)) closeSearch();
+        });
+
+        // "/" foca a busca; Esc fecha a busca e a câmera aberta
+        document.addEventListener('keydown', (e) => {
+            const el = document.activeElement;
+            const typing = el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable);
+            if (e.key === '/' && !typing) {
+                e.preventDefault();
+                searchInput.focus();
+            } else if (e.key === 'Escape') {
+                closeSearch();
+                if (el === searchInput) searchInput.blur();
+                closeSelection();
+            }
+        });
+
+        // Ao cruzar o breakpoint, troca popup <-> painel do mobile e liga/desliga as fixadas
+        const onBreakpoint = () => {
+            closeSelection();
+            syncPinPlayers();
+            updateSearchPlaceholder();
+            map.invalidateSize();
+        };
+        if (MOBILE_MQ.addEventListener) MOBILE_MQ.addEventListener('change', onBreakpoint);
+        else MOBILE_MQ.addListener(onBreakpoint);
+
         // Encerra as sessões abertas ao sair da página.
         window.addEventListener('beforeunload', () => {
             Object.keys(activePlayers).forEach(stopPlayer);
         });
 
+        // ---- Aviso de carregamento (passo atual / erro com "Tentar novamente") ----
+        const loadingEl = document.getElementById('loading');
+
+        function setLoading(title, step) {
+            document.getElementById('loading-title').textContent = title;
+            document.getElementById('loading-step').textContent = step;
+        }
+
+        function finishLoading() {
+            loadingEl.classList.add('is-done');
+            setTimeout(() => { loadingEl.hidden = true; }, 300);
+            // Só faz sentido pedir para tocar numa câmera depois que elas aparecem
+            mHint.hidden = !!selected;
+        }
+
+        // Mensagem para o visitante (o detalhe técnico vai para o console)
+        function loadErrorText(error) {
+            if (error.name === 'AbortError') return 'O servidor demorou demais para responder.';
+            if (/^HTTP \d+/.test(error.message)) return `O servidor respondeu com erro (${error.message}).`;
+            if (error instanceof SyntaxError) return 'A lista de câmeras veio num formato inesperado.';
+            return 'Não foi possível conectar ao servidor.';
+        }
+
+        document.getElementById('loading-retry').addEventListener('click', () => {
+            loadingEl.classList.remove('is-error');
+            document.getElementById('camera-count').textContent = 'Carregando…';
+            boot();
+        });
+
         // Carrega a lista (estática ou via proxy) e monta o mapa.
-        (async function boot() {
+        async function boot() {
+            setLoading('Carregando câmeras', 'Buscando a lista de câmeras…');
+            // A lista vem do COR (via proxy) e às vezes demora: avisa e, no limite, desiste
+            const ctrl = new AbortController();
+            const slowTimer = setTimeout(() => setLoading('Carregando câmeras', 'O servidor do COR está demorando, aguarde…'), 8000);
+            const abortTimer = setTimeout(() => ctrl.abort(), 45000);
             let list;
             try {
-                const r = await fetch(CAMERAS_LIST);
+                const r = await fetch(CAMERAS_LIST, { signal: ctrl.signal });
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 list = await r.json();
             } catch (error) {
                 console.error('Erro ao carregar a lista de câmeras:', error);
-                document.getElementById('loading').textContent = 'Erro ao carregar a lista de câmeras (veja o console)';
+                setLoading('Não foi possível carregar as câmeras', loadErrorText(error));
+                loadingEl.classList.add('is-error');
                 document.getElementById('camera-count').textContent = 'Erro ao carregar';
                 return;
+            } finally {
+                clearTimeout(slowTimer);
+                clearTimeout(abortTimer);
             }
 
-            document.getElementById('loading').style.display = 'none';
+            setLoading('Carregando câmeras', 'Verificando quais estão no ar…');
 
-                // Avisa logo se o servidor de vídeo do COR estiver fora do ar.
-                probeStreamServer();
+            // Avisa logo se o servidor de vídeo do COR estiver fora do ar.
+            probeStreamServer();
 
-                // Status das câmeras (online/offline). Se não carregar, tudo fica "não checada".
-                const onlineSet = new Set(), offlineSet = new Set();
-                let statusInfo = null;
-                try {
-                    const sr = await fetch(STATUS_URL, { cache: 'no-cache' });
-                    if (sr.ok) {
-                        statusInfo = await sr.json();
-                        (statusInfo.online || []).forEach(id => onlineSet.add(id));
-                        (statusInfo.offline || []).forEach(id => offlineSet.add(id));
-                    }
-                } catch (e) { /* sem status: marcadores no padrão */ }
-
-                const dockCloseBtn = document.getElementById('camera-dock-close');
-                if (dockCloseBtn) {
-                    dockCloseBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        closeCameraDock();
-                    });
+            // Status das câmeras (online/offline). Se não carregar, tudo fica "não checada".
+            const onlineSet = new Set(), offlineSet = new Set();
+            let statusInfo = null;
+            try {
+                const sr = await fetch(STATUS_URL, { cache: 'no-cache' });
+                if (sr.ok) {
+                    statusInfo = await sr.json();
+                    (statusInfo.online || []).forEach(id => onlineSet.add(id));
+                    (statusInfo.offline || []).forEach(id => offlineSet.add(id));
                 }
+            } catch (e) { /* sem status: marcadores no padrão */ }
+            const hasStatus = !!(statusInfo && (onlineSet.size || offlineSet.size));
 
-                const cameras = (Array.isArray(list) ? list : (list.cameras || [])).map(normalizeCamera);
+            // O bairros-rj.json veio de geocodificação: descarta pontos fora do
+            // município e coordenadas repetidas (fallback do geocodificador, que
+            // jogaria câmeras do Catumbi em "Anchieta", por exemplo).
+            const rawBairros = ((await bairrosReady) || [])
+                .map(b => ({ nome: b.nome, lat: parseFloat(b.latitude), lon: parseFloat(b.longitude) }))
+                .filter(b => b.nome && b.lat > -23.09 && b.lat < -22.74 && b.lon > -43.80 && b.lon < -43.09);
+            const coordCount = {};
+            rawBairros.forEach(b => { const k = b.lat + ',' + b.lon; coordCount[k] = (coordCount[k] || 0) + 1; });
+            const bairroList = rawBairros
+                .filter(b => coordCount[b.lat + ',' + b.lon] === 1)
+                .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+            bairroList.forEach((b, i) => { b.idx = i; b.key = norm(b.nome); });
+            bairroIndex = bairroList;
 
-                cameras.forEach(cam => {
-                    if (isNaN(cam.lat) || isNaN(cam.lon)) return;
+            const cameras = (Array.isArray(list) ? list : (list.cameras || [])).map(normalizeCamera);
 
-                    const baseIcon = onlineSet.has(cam.cameraId) ? cameraIconOnline
-                        : (offlineSet.has(cam.cameraId) ? cameraIconOffline : cameraIcon);
-                    const marker = L.marker([cam.lat, cam.lon], { icon: baseIcon }).addTo(map);
-                    marker._baseIcon = baseIcon;
+            // Deixa o passo aparecer na tela antes do trabalho pesado (milhares de marcadores)
+            setLoading('Carregando câmeras', `Montando o mapa com ${fmt(cameras.length)} câmeras…`);
+            await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
 
-                    const popupPlaceholder = `
-                        <div class="camera-popup">
-                            <h3>#${cam.cameraId} - ${cam.nome}</h3>
-                            <span style="position: absolute;bottom: 10px;left: 0;right: 0;color: #bbb;font-size: 9px;z-index: 1001;">
-                                Algumas câmeras podem demorar até 30 segundos para carregar
-                            </span>
-                            <div id="camera-content-${cam.cameraId}" class="camera-content">
-                                <p>Carregando câmera...</p>
-                            </div>
-                        </div>
-                    `;
+            // Marcadores separados por tipo x status ("brt:online", ...): os filtros
+            // entram/saem do cluster em lote, bem mais rápido que um a um.
+            const markerGroups = {};
+            ['brt', 'other'].forEach(t => ['online', 'offline', 'unknown'].forEach(s => {
+                markerGroups[t + ':' + s] = [];
+            }));
 
-                    if (!isMobileUi()) {
-                        const popup = L.popup({ maxWidth: 650, minWidth: 320 }).setContent(popupPlaceholder);
-                        marker.bindPopup(popup);
-                    }
+            cameras.forEach(cam => {
+                if (isNaN(cam.lat) || isNaN(cam.lon)) return;
 
-                    // Monta o player (video + WHEP) dentro do content da câmera.
-                    const loadCameraContent = (cameraId) => {
-                        const contentDiv = document.getElementById(`camera-content-${cameraId}`);
-                        if (!contentDiv) return;
-                        if (isMobileUi() && selectedCameraId !== cameraId) return;
+                const type = cam.brt ? 'brt' : 'other';
+                const status = onlineSet.has(cam.cameraId) ? 'online'
+                    : (offlineSet.has(cam.cameraId) ? 'offline' : 'unknown');
+                cam.status = status;
+                cam.bairro = nearestBairro(cam.lat, cam.lon, bairroList);
 
-                        const showError = (message) => {
-                            if (!contentDiv.isConnected) return;
-                            if (isMobileUi() && selectedCameraId !== cameraId) return;
-                            contentDiv.innerHTML = `
-                                <div style="text-align: center; padding: 30px 20px;">
-                                    <p style="color: #d32f2f; margin-bottom: 10px; font-weight: bold;">⚠️ ${message}</p>
-                                    <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
-                                        Esta câmera pode estar temporariamente fora do ar.
-                                    </p>
-                                    <button id="retry-btn-${cameraId}"
-                                        style="background: #1f54b8; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; margin-right: 10px;">
-                                        Tentar novamente
-                                    </button>
-                                    <a href="${cam.pageUrl}" target="_blank"
-                                        style="display: inline-block; background: #666; color: white; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 14px;">
-                                        Abrir em nova aba
-                                    </a>
-                                </div>
-                            `;
-                            setTimeout(() => {
-                                const retryBtn = document.getElementById(`retry-btn-${cameraId}`);
-                                if (retryBtn) {
-                                    retryBtn.addEventListener('click', (e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        loadCameraContent(cameraId);
-                                    });
-                                }
-                            }, 100);
-                        };
+                const entry = { cam, type, status, key: norm(`${cam.cameraId} ${cam.nome}`), nameKey: norm(cam.titulo) };
+                // bubblingMouseEvents: false -> o clique no marcador não chega no mapa (que fecharia o popup)
+                entry.marker = L.circleMarker([cam.lat, cam.lon], { ...markerStyle(entry, false), bubblingMouseEvents: false });
+                entry.marker.entry = entry; // usado no ícone do cluster
+                entry.marker.on('click', () => selectCamera(entry));
+                markerGroups[type + ':' + status].push(entry.marker);
+                camById.set(cam.cameraId, entry);
+            });
 
-                        contentDiv.innerHTML = `
-                            <a href="${cam.pageUrl}" class="newTabOpenBtn" target="_blank">Abrir numa nova aba ◥</a>
-                            <div class="cam-video-wrap">
-                                <div id="loading-bar-parent">
-                                    <div class="loading-bar" id="loading-bar-${cameraId}"></div>
-                                </div>
-                                <video id="cam-video-${cameraId}" class="cam-video" autoplay muted playsinline></video>
-                                <div id="cam-status-${cameraId}" class="cam-status">Conectando…</div>
-                            </div>
-                        `;
+            console.log(`${cameras.length} câmeras carregadas no mapa`);
 
-                        const videoEl = document.getElementById(`cam-video-${cameraId}`);
-                        const statusEl = document.getElementById(`cam-status-${cameraId}`);
-                        if (!videoEl) return;
-                        videoEl.onplaying = () => {
-                            if (statusEl) statusEl.style.display = 'none';
-                            finishLoadingBar(cameraId);
-                        };
+            // ---- Filtros, contadores e status no header -------------------------
+            const filters = {
+                type: { brt: true, other: true },
+                status: { online: true, offline: true, unknown: true }
+            };
+            const groupSize = {};
+            Object.keys(markerGroups).forEach(k => { groupSize[k] = markerGroups[k].length; });
+            // Soma os marcadores dos grupos (tipo, status) que passam no predicado
+            const countWhere = (pred) => Object.keys(groupSize).reduce((n, k) => {
+                const [t, s] = k.split(':');
+                return pred(t, s) ? n + groupSize[k] : n;
+            }, 0);
+            const isVisible = (t, s) => filters.type[t] && filters.status[s];
 
-                        // barrinha de progresso estilo YouTube
-                        clearCameraTimeouts(cameraId);
-                        cameraTimeouts[cameraId] = {};
-                        cameraTimeouts[cameraId].timeout1 = setTimeout(() => startLoadingBar(cameraId), 150);
+            document.getElementById('camera-count').textContent = `${fmt(countWhere(() => true))} câmeras`;
+            if (hasStatus) {
+                const pills = document.getElementById('status-pills');
+                document.getElementById('pill-live').textContent = `${fmt(countWhere((t, s) => s === 'online'))} ao vivo`;
+                document.getElementById('pill-off').textContent = `${fmt(countWhere((t, s) => s === 'offline'))} fora do ar`;
+                if (statusInfo.generatedAt) pills.title = 'Status checado em ' + new Date(statusInfo.generatedAt).toLocaleString('pt-BR');
+                pills.hidden = false;
+            }
 
-                        stopPlayer(cameraId); // encerra stream anterior desta câmera (retry)
-                        startCameraStream(cam, videoEl, (msg) => {
-                            clearCameraTimeouts(cameraId);
-                            showError(msg);
-                        });
-                    };
+            // Sem status.json não há o que filtrar por status: só os chips de tipo.
+            // A bolinha de cada chip mostra a cor dos pontos que ele controla
+            // ("Ao vivo" pega os dois tipos: bolinha verde + azul).
+            const chipDefs = [
+                ...(hasStatus ? [
+                    { group: 'status', value: 'online', label: 'Ao vivo', duo: [COLOR.online, COLOR.brt] },
+                    { group: 'status', value: 'offline', label: 'Fora do ar', swatch: COLOR.offline, ring: COLOR.offline }
+                ] : []),
+                { group: 'type', value: 'brt', label: 'BRT', swatch: COLOR.brt, ring: COLOR.brt },
+                { group: 'type', value: 'other', label: 'Demais', swatch: COLOR.online, ring: COLOR.online }
+            ];
+            const chipsEl = document.getElementById('filter-chips');
+            chipsEl.innerHTML = chipDefs.map((c, i) => `
+                <button type="button" class="chip" data-chip="${i}" aria-pressed="true" style="--swatch:${c.swatch};--ring:${c.ring}">
+                    ${c.duo
+                        ? `<span class="chip-duo">${c.duo.map(color => `<i style="--c:${color}"></i>`).join('')}</span>`
+                        : '<span class="chip-swatch"></span>'}<span class="chip-label">${c.label}</span><span class="chip-count"></span>
+                </button>`).join('');
+            const chipEls = [...chipsEl.querySelectorAll('.chip')];
 
-                    if (isMobileUi()) {
-                        marker.on('click', () => {
-                            setSelectedMarker(marker);
-                            openCameraDock(`#${cam.cameraId} - ${cam.nome}`, cam.cameraId);
-                            loadCameraContent(cam.cameraId);
-                        });
-                    } else {
-                        marker.on('popupopen', () => {
-                            setSelectedMarker(marker);
-                            loadCameraContent(cam.cameraId);
-                        });
-                        marker.on('popupclose', () => {
-                            clearCameraTimeouts(cam.cameraId);
-                            stopPlayer(cam.cameraId);
-                            if (selectedCameraId === cam.cameraId) selectedCameraId = null;
-                            clearSelectedMarker();
-                        });
-                    }
+            const groupOn = {}; // grupo já está no cluster?
+            const applyFilters = () => {
+                let add = [], remove = [];
+                Object.keys(markerGroups).forEach(k => {
+                    const [t, s] = k.split(':');
+                    const want = isVisible(t, s);
+                    if (want && !groupOn[k]) add = add.concat(markerGroups[k]);
+                    else if (!want && groupOn[k]) remove = remove.concat(markerGroups[k]);
+                    groupOn[k] = want;
                 });
+                if (remove.length) clusters.removeLayers(remove);
+                if (add.length) clusters.addLayers(add);
+                // A câmera aberta foi escondida pelo filtro: fecha
+                if (selected && !isVisible(selected.type, selected.status)) closeSelection();
 
-                console.log(`${cameras.length} câmeras carregadas no mapa`);
+                // Contagem de cada chip considerando o que está ligado no outro filtro
+                chipDefs.forEach((c, i) => {
+                    chipEls[i].setAttribute('aria-pressed', String(filters[c.group][c.value]));
+                    chipEls[i].querySelector('.chip-count').textContent = fmt(c.group === 'type'
+                        ? countWhere((t, s) => t === c.value && filters.status[s])
+                        : countWhere((t, s) => s === c.value && filters.type[t]));
+                });
+            };
+            chipsEl.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-chip]');
+                if (!btn) return;
+                const c = chipDefs[+btn.dataset.chip];
+                filters[c.group][c.value] = !filters[c.group][c.value];
+                applyFilters();
+            });
+            applyFilters();
+            finishLoading();
 
-                // Contador + legenda de status
-                const countEl = document.getElementById('camera-count');
-                if (statusInfo && (onlineSet.size || offlineSet.size)) {
-                    countEl.textContent = `${cameras.length} câmeras · ${onlineSet.size} funcionando · ${offlineSet.size} fora do ar`;
-                    const when = statusInfo.generatedAt ? new Date(statusInfo.generatedAt).toLocaleString('pt-BR') : '';
-                    const legend = document.createElement('div');
-                    legend.className = 'status-legend';
-                    legend.innerHTML =
-                        '<div><span class="dot on"></span>Funcionando</div>' +
-                        '<div><span class="dot off"></span>Fora do ar</div>' +
-                        '<div><span class="dot unk"></span>Não verificada</div>' +
-                        (when ? `<div style="margin-top:4px;color:#888;font-size:11px;">Checado em ${when}</div>` : '');
-                    document.getElementById('map').appendChild(legend);
-                } else {
-                    countEl.textContent = `${cameras.length} câmeras disponíveis`;
-                }
-        })();
+            // ---- Restaura as fixadas da última visita ---------------------------
+            let saved = [];
+            try { saved = JSON.parse(storage.get(PINS_KEY) || '[]'); } catch (e) { }
+            if (Array.isArray(saved)) {
+                saved.forEach(id => {
+                    const entry = camById.get(String(id));
+                    if (entry) pinCamera(entry.cam, { restoring: true });
+                });
+            }
+        }
+
+        boot();
     </script>
 </body>
 

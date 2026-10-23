@@ -194,8 +194,8 @@ const BAIRROS_DATA = [
   {
     "id": 12175,
     "nome": "Centro",
-    "latitude": -22.2800004,
-    "longitude": -42.5325303
+    "latitude": -22.9035,
+    "longitude": -43.179
   },
   {
     "id": 12176,
