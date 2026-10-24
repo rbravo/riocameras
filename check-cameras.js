@@ -60,7 +60,7 @@ async function fetchFullList(maxTries = 14) {
   let last = [];
   for (let i = 0; i < maxTries; i++) {
     try {
-      const r = await fetch(API, { headers: { Accept: 'application/json' } });
+      const r = await fetch(API, { headers: { ...COR_HEADERS, Accept: 'application/json' } });
       const j = await r.json();
       const a = Array.isArray(j) ? j : (j.cameras || []);
       if (a.length >= last.length) last = a;
@@ -232,7 +232,12 @@ function pageHelpers() {
 (async () => {
   console.log('↓ Buscando lista de câmeras...');
   const listRaw = await fetchFullList();
-  let cameras = listRaw.filter(c => c && c.apiId);
+  // Desde 24/10/2026 o COR manda o apiId sem zeros ("1" em vez de "000001") e às
+  // vezes repete a câmera nas duas formas: padroniza em 6 dígitos (formato do site).
+  const seen = new Set();
+  let cameras = listRaw.filter(c => c && c.apiId)
+    .map(c => ({ ...c, apiId: String(c.apiId).padStart(6, '0') }))
+    .filter(c => !seen.has(c.apiId) && seen.add(c.apiId));
   if (IDS) cameras = IDS.map(id => cameras.find(c => c.apiId === id) || { apiId: id });
   if (LIMIT) cameras = cameras.slice(0, LIMIT);
   if (!cameras.length) throw new Error('API não devolveu câmeras. Tente novamente.');

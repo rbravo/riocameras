@@ -32,10 +32,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Leaflet.markercluster (só o CSS base; o visual dos clusters é nosso) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <!-- Ícone da aba: ponto verde "ao vivo" -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f1113'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%234fd18b'/%3E%3C/svg%3E">
+
+    <!-- Leaflet 1.9.4 e Leaflet.markercluster 1.5.3 servidos pelo próprio site
+         (public/vendor/): alguns visitantes não alcançam o unpkg.com -->
+    <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+    <!-- Só o CSS base do cluster; o visual dos clusters é nosso -->
+    <link rel="stylesheet" href="vendor/leaflet.markercluster/MarkerCluster.css" />
 
     <style>
         :root {
@@ -1392,8 +1396,8 @@
 
     <!-- Leaflet JS -->
     <script src="bairros-data.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="vendor/leaflet/leaflet.js"></script>
+    <script src="vendor/leaflet.markercluster/leaflet.markercluster.js"></script>
 
     <script>
         // ============================================================
@@ -1802,13 +1806,18 @@
             }
         }
 
+        // Desde 24/10/2026 o COR manda o apiId sem zeros à esquerda ("1" em vez de
+        // "000001"). Padronizamos em 6 dígitos, o formato do status.json e das
+        // fixadas salvas. O session/start e a página oficial aceitam os dois.
+        const padId = (id) => /^\d+$/.test(id) ? String(id).padStart(6, '0') : (id || '');
+
         // Normaliza um item da API nova para o formato usado aqui.
         function normalizeCamera(c) {
             const nome = c.nome || 'Câmera';
             return {
                 // id = apiId: único campo presente em TODAS as variações da API
-                cameraId: c.apiId || String(c.cameraId || ''),
-                code: c.apiId || c.code,       // "000001" (usado no session/start)
+                cameraId: padId(c.apiId) || String(c.cameraId || ''),
+                code: padId(c.apiId || c.code), // "000001" (usado no session/start)
                 nome: nome,
                 // Nome sem os sufixos "- BRT" / "- FIXA" (o tipo já aparece na linha de meta)
                 titulo: nome.replace(/(\s*-\s*(BRT|FIXA)\s*)+$/i, '').trim() || nome,
@@ -2372,7 +2381,10 @@
             bairroList.forEach((b, i) => { b.idx = i; b.key = norm(b.nome); });
             bairroIndex = bairroList;
 
-            const cameras = (Array.isArray(list) ? list : (list.cameras || [])).map(normalizeCamera);
+            // O COR às vezes lista a mesma câmera duas vezes ("004227" e "4227"): fica a 1ª
+            const seenIds = new Set();
+            const cameras = (Array.isArray(list) ? list : (list.cameras || [])).map(normalizeCamera)
+                .filter(cam => !seenIds.has(cam.cameraId) && seenIds.add(cam.cameraId));
 
             // Deixa o passo aparecer na tela antes do trabalho pesado (milhares de marcadores)
             setLoading('Carregando câmeras', `Montando o mapa com ${fmt(cameras.length)} câmeras…`);

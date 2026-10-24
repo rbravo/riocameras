@@ -10,6 +10,7 @@ const COR = 'https://appcor.cor-rio.work';
 const COR_API = COR + '/api/cameras/';
 const PLAYER = COR + '/api/camera/player';
 // Header que faz o COR aceitar a sinalização (same-origin). Sem ele: 403.
+// Desde 24/10/2026 a LISTA também exige (responde 403 "Acesso não permitido.").
 const COR_HEADERS = { Origin: COR, Referer: COR + '/' };
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -20,7 +21,7 @@ async function fetchPreferFull(url, tries = 14) {
     let last = [];
     for (let i = 0; i < tries; i++) {
         try {
-            const r = await fetch(url, { headers: { Accept: 'application/json' } });
+            const r = await fetch(url, { headers: { ...COR_HEADERS, Accept: 'application/json' } });
             if (r.ok) {
                 const j = await r.json();
                 const a = Array.isArray(j) ? j : (j.cameras || []);

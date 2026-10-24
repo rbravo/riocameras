@@ -58,6 +58,11 @@ if (fs.existsSync(statusSrc)) {
     console.log('ℹ️  status.json ainda não existe (rode o job de checagem)');
 }
 
+// Copiar as bibliotecas servidas pelo próprio site (Leaflet + markercluster)
+console.log('📦 Copiando vendor/...');
+fs.cpSync(path.join(__dirname, 'public', 'vendor'), path.join(buildDir, 'vendor'), { recursive: true });
+console.log('✅ vendor/ copiado');
+
 // 3. Gerar bairros-data.js
 console.log('📊 Gerando bairros-data.js...');
 const bairrosJson = fs.readFileSync('bairros-rj.json', 'utf8');

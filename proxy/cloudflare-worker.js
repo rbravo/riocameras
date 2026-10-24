@@ -27,6 +27,7 @@ const PLAYER = COR + '/api/camera/player';
 const ALLOW_ORIGIN = '*';     // ou 'https://rbravo.github.io'
 const LIST_TTL = 120;         // segundos de cache (borda) da lista
 // Header que faz o COR aceitar a sinalização (same-origin). Sem ele: 403.
+// Desde 24/10/2026 a LISTA também exige (responde 403 "Acesso não permitido.").
 const COR_HEADERS = { Origin: COR, Referer: COR + '/' };
 
 export default {
@@ -62,6 +63,8 @@ export default {
     if (resp) return resp;
 
     const list = await fetchPreferFull(API + '?limit=0');
+    // Lista vazia = a origem falhou (ex.: 403). Não cacheia nem finge sucesso.
+    if (!list.length) return json({ error: 'Falha ao buscar câmeras na origem' }, 502, 0);
     resp = json(list, 200, LIST_TTL);
     if (resp.status === 200) ctx.waitUntil(cache.put(cacheKey, resp.clone()));
     return resp;
@@ -94,7 +97,7 @@ async function fetchPreferFull(url, tries = 14) {
   let last = [];
   for (let i = 0; i < tries; i++) {
     try {
-      const r = await fetch(url, { headers: { Accept: 'application/json' }, cf: { cacheTtl: 0 } });
+      const r = await fetch(url, { headers: { ...COR_HEADERS, Accept: 'application/json' }, cf: { cacheTtl: 0 } });
       if (r.ok) {
         const j = await r.json();
         const a = Array.isArray(j) ? j : (j.cameras || []);
